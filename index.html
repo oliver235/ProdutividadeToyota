@@ -6,6 +6,7 @@
   <title>Toyota Oficinas</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #222; }
@@ -26,49 +27,13 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
       text-align: center;
     }
-    .login-box h1 {
-      color: #EB0A1E;
-      font-size: 28px;
-      font-weight: 800;
-      margin-bottom: 4px;
-      letter-spacing: 1px;
-    }
-    .login-box .subtitle {
-      color: #666;
-      font-size: 14px;
-      margin-bottom: 28px;
-    }
-    .login-box input {
-      width: 100%;
-      padding: 14px 16px;
-      margin: 8px 0;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      font-size: 16px;
-    }
-    .login-box input:focus {
-      outline: none;
-      border-color: #EB0A1E;
-    }
-    #login-btn {
-      width: 100%;
-      padding: 14px;
-      background: #EB0A1E;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: 700;
-      margin-top: 16px;
-      cursor: pointer;
-    }
+    .login-box h1 { color: #EB0A1E; font-size: 28px; font-weight: 800; margin-bottom: 4px; letter-spacing: 1px; }
+    .login-box .subtitle { color: #666; font-size: 14px; margin-bottom: 28px; }
+    .login-box input { width: 100%; padding: 14px 16px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; }
+    .login-box input:focus { outline: none; border-color: #EB0A1E; }
+    #login-btn { width: 100%; padding: 14px; background: #EB0A1E; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; margin-top: 16px; cursor: pointer; }
     #login-btn:disabled { opacity: 0.6; }
-    #login-error {
-      color: #c0392b;
-      font-size: 14px;
-      margin-top: 12px;
-      min-height: 20px;
-    }
+    #login-error { color: #c0392b; font-size: 14px; margin-top: 12px; min-height: 20px; }
     #app { min-height: 100vh; display: flex; flex-direction: column; }
     .header { background: #EB0A1E; color: white; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
     .logo { font-weight: bold; }
@@ -93,6 +58,8 @@
     .small { font-size: 12px; color: #666; }
     .logout, .admin-btn { background: transparent; border: 1px solid white; color: white; padding: 6px 12px; border-radius: 6px; }
     .area-title { background: #EB0A1E; color: white; padding: 8px 12px; border-radius: 8px; margin: 16px 0 8px; font-weight: 600; }
+    .photo-preview { max-width: 100%; max-height: 120px; margin-top: 8px; border-radius: 8px; }
+    canvas { max-width: 100%; }
   </style>
 </head>
 <body>
@@ -127,7 +94,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const { jsPDF } = window.jspdf;
@@ -148,15 +115,7 @@
     const secondaryApp = initializeApp(firebaseConfig, "secondary");
     const secondaryAuth = getAuth(secondaryApp);
 
-    const workshops = [
-      { id: "melisauto-odivelas", name: "Melisauto Odivelas", address: "Av. José Francisco Guerreiro Lote 1, Pontinha" },
-      { id: "jfc-paredes", name: "José Ferreira da Cruz", address: "Av. da República 146, Paredes" },
-      { id: "macedo-famalicao", name: "Macedo & Macedo Famalicão", address: "Av. 9 de Julho 462" },
-      { id: "autoimperial-braganca", name: "Auto Imperial Bragança", address: "Av. das Cantarias 130" },
-      { id: "coutauto-famalicao", name: "Coutauto Famalicão", address: "Rua Joaquim de Sá Leonardo Lote 8" },
-      { id: "caetano-priorvelho", name: "Caetano Auto Prior Velho", address: "Rua Nacala 2" }
-    ];
-
+    let workshops = [];
     const questions = [
       { area: "Agendamento", id: "1.1", text: "A oficina tem a capacidade de marcar um serviço no prazo máximo de 3 dias úteis?" },
       { area: "Agendamento", id: "1.2", text: "O Lead Time de marcação transmitido na chamada de cliente mistério está de acordo com a informação disponível no Quadro de Marcações?" },
@@ -208,14 +167,15 @@
     let currentAudit = null;
     let allAudits = [];
 
-    onAuthStateChanged(auth, user => {
+    onAuthStateChanged(auth, async user => {
       if (user) {
         currentUser = user;
         isMaster = user.email === MASTER_EMAIL;
         document.getElementById("login-screen").style.display = "none";
         document.getElementById("app").style.display = "flex";
         document.getElementById("admin-btn").style.display = isMaster ? "inline-block" : "none";
-        loadAudits();
+        await loadWorkshops();
+        await loadAudits();
       } else {
         currentUser = null;
         isMaster = false;
@@ -230,32 +190,48 @@
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
       errorEl.textContent = "";
-      if (!email || !password) {
-        errorEl.textContent = "Preenche email e password";
-        return;
-      }
-      btn.disabled = true;
-      btn.textContent = "A entrar...";
+      if (!email || !password) { errorEl.textContent = "Preenche email e password"; return; }
+      btn.disabled = true; btn.textContent = "A entrar...";
       try {
         await signInWithEmailAndPassword(auth, email, password);
       } catch (e) {
         errorEl.textContent = "Email ou password incorretos. Verifica se a conta existe no Firebase.";
-        btn.disabled = false;
-        btn.textContent = "Entrar";
+        btn.disabled = false; btn.textContent = "Entrar";
       }
     });
 
     document.getElementById("logout-btn").addEventListener("click", () => signOut(auth));
     document.getElementById("admin-btn").addEventListener("click", () => showView("admin"));
 
+    async function loadWorkshops() {
+      try {
+        const snap = await getDocs(collection(db, "workshops"));
+        workshops = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (workshops.length === 0) {
+          // seed inicial se não houver
+          const initial = [
+            { name: "Melisauto Odivelas", address: "Av. José Francisco Guerreiro Lote 1, Pontinha" },
+            { name: "José Ferreira da Cruz", address: "Av. da República 146, Paredes" },
+            { name: "Macedo & Macedo Famalicão", address: "Av. 9 de Julho 462" },
+            { name: "Auto Imperial Bragança", address: "Av. das Cantarias 130" },
+            { name: "Coutauto Famalicão", address: "Rua Joaquim de Sá Leonardo Lote 8" },
+            { name: "Caetano Auto Prior Velho", address: "Rua Nacala 2" }
+          ];
+          for (const w of initial) {
+            await addDoc(collection(db, "workshops"), w);
+          }
+          const snap2 = await getDocs(collection(db, "workshops"));
+          workshops = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+      } catch (e) { workshops = []; }
+    }
+
     async function loadAudits() {
       try {
         const q = query(collection(db, "audits"), orderBy("date", "desc"));
         const snap = await getDocs(q);
         allAudits = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      } catch (e) {
-        allAudits = [];
-      }
+      } catch (e) { allAudits = []; }
       render();
     }
 
@@ -271,17 +247,32 @@
       const title = document.getElementById("header-title");
 
       if (currentView === "admin" && isMaster) {
-        title.textContent = "Administração";
+        title.textContent = "Backoffice";
         main.innerHTML = `
           <div class="card">
-            <h3>Criar nova conta</h3>
+            <h3>Mudar Password</h3>
+            <div class="form-group"><label>Nova Password</label><input type="password" id="new-pass"></div>
+            <button class="btn" id="change-pass-btn">Alterar Password</button>
+            <p id="pass-msg" class="small"></p>
+          </div>
+          <div class="card">
+            <h3>Criar nova Oficina</h3>
+            <div class="form-group"><label>Nome</label><input type="text" id="new-w-name"></div>
+            <div class="form-group"><label>Morada</label><input type="text" id="new-w-address"></div>
+            <button class="btn" id="add-workshop-btn">Criar Oficina</button>
+            <p id="w-msg" class="small"></p>
+          </div>
+          <div class="card">
+            <h3>Criar Conta de Utilizador</h3>
             <div class="form-group"><label>Email</label><input type="email" id="new-email"></div>
             <div class="form-group"><label>Password</label><input type="password" id="new-password"></div>
             <button class="btn" id="create-btn">Criar conta</button>
-            <p id="admin-msg" class="small" style="margin-top:8px;"></p>
+            <p id="admin-msg" class="small"></p>
           </div>
           <div class="card"><h3>Contas criadas</h3><div id="users-list">A carregar...</div></div>
         `;
+        document.getElementById("change-pass-btn").addEventListener("click", changePassword);
+        document.getElementById("add-workshop-btn").addEventListener("click", addWorkshop);
         document.getElementById("create-btn").addEventListener("click", createUser);
         loadUsers();
         return;
@@ -292,15 +283,15 @@
         main.innerHTML = workshops.map(w => {
           const has = allAudits.some(a => a.workshopId === w.id && a.completed);
           return `<div class="card" onclick="selectWorkshop('${w.id}')">
-            <strong>${w.name}</strong><br><span class="small">${w.address}</span>
+            <strong>${w.name}</strong><br><span class="small">${w.address || ""}</span>
             <span class="status ${has ? 'completo' : 'emcurso'}" style="float:right">${has ? 'Com auditorias' : 'Sem'}</span>
           </div>`;
-        }).join("");
+        }).join("") || "<div class='card'>Nenhuma oficina. Cria no Admin.</div>";
       } else if (currentView === "dataEntry") {
         title.textContent = "Dados de Pré-Auditoria";
         const w = workshops.find(x => x.id === currentWorkshopId);
         main.innerHTML = `
-          <div class="card"><h3>${w.name}</h3></div>
+          <div class="card"><h3>${w ? w.name : ""}</h3></div>
           <div class="form-group"><label>Horas Trabalhadas / Técnico / Dia</label><input type="number" step="0.1" id="horasTec"></div>
           <div class="form-group"><label>Horas Trabalhadas / m²</label><input type="number" step="0.1" id="horasM2"></div>
           <div class="form-group"><label>CPUs / Mês</label><input type="number" id="cpusMes"></div>
@@ -317,7 +308,7 @@
       } else if (currentView === "checklist") {
         title.textContent = "Auditoria";
         const w = workshops.find(x => x.id === currentWorkshopId);
-        let html = `<div class="card"><strong>${w.name}</strong></div>`;
+        let html = `<div class="card"><strong>${w ? w.name : ""}</strong></div>`;
         let lastArea = "";
         currentAudit.answers.forEach((a, i) => {
           if (a.area !== lastArea) {
@@ -332,6 +323,8 @@
               <button class="btn-choice ${a.response==='na'?'active na':''}" onclick="setResponse(${i},'na')">N/A</button>
             </div>
             <textarea placeholder="Observações / Evidência" onchange="setNotes(${i},this.value)" style="width:100%;padding:8px;margin-top:8px;border:1px solid #ddd;border-radius:6px;">${a.notes||''}</textarea>
+            <input type="file" accept="image/*" capture="environment" onchange="setPhoto(${i}, this)" style="margin-top:8px;">
+            ${a.photo ? `<img src="${a.photo}" class="photo-preview">` : ""}
           </div>`;
         });
         html += `<button class="btn" id="finish-btn">Concluir e Guardar</button>`;
@@ -361,7 +354,7 @@
         workshopId: currentWorkshopId,
         date: new Date().toISOString(),
         userEmail: currentUser.email,
-        answers: questions.map(q => ({ ...q, response: null, notes: "" })),
+        answers: questions.map(q => ({ ...q, response: null, notes: "", photo: null })),
         kpis: {
           horasTec: +document.getElementById("horasTec").value || 0,
           horasM2: +document.getElementById("horasM2").value || 0,
@@ -381,6 +374,15 @@
 
     window.setResponse = (i, val) => { if (currentAudit) { currentAudit.answers[i].response = val; render(); } };
     window.setNotes = (i, val) => { if (currentAudit) currentAudit.answers[i].notes = val; };
+    window.setPhoto = (i, input) => {
+      if (!currentAudit || !input.files[0]) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        currentAudit.answers[i].photo = e.target.result;
+        render();
+      };
+      reader.readAsDataURL(input.files[0]);
+    };
 
     async function finishAudit() {
       if (!currentAudit) return;
@@ -397,32 +399,74 @@
       if (!a) return;
       const w = workshops.find(x => x.id === a.workshopId);
       const score = Math.round(a.answers.filter(ans => ans.response === "sim").length / a.answers.length * 100);
+      // scores por área
+      const areas = [...new Set(a.answers.map(ans => ans.area))];
+      const areaScores = areas.map(area => {
+        const qs = a.answers.filter(ans => ans.area === area);
+        return Math.round(qs.filter(ans => ans.response === "sim").length / qs.length * 100);
+      });
+
       document.getElementById("header-title").textContent = "Relatório";
       document.getElementById("main-content").innerHTML = `
-        <div class="card">
+        <div class="card" style="text-align:center;">
+          <div style="font-size:28px;font-weight:800;color:#EB0A1E;letter-spacing:2px;">TOYOTA</div>
           <h3>${w ? w.name : a.workshopId}</h3>
           <p class="small">${new Date(a.date).toLocaleString("pt-PT")} • ${a.userEmail}</p>
-          <p><strong>Pontuação: ${score}%</strong></p>
+          <p><strong>Pontuação Global: ${score}%</strong></p>
+          <canvas id="radarChart" height="220"></canvas>
         </div>
-        ${a.answers.map(ans => `<div class="card"><strong>${ans.id} ${ans.text}</strong><br><span class="status ${ans.response==='sim'?'completo':ans.response==='nao'?'emcurso':'pendente'}">${ans.response || '—'}</span>${ans.notes ? `<p class="small">${ans.notes}</p>` : ''}</div>`).join("")}
+        ${a.answers.map(ans => `<div class="card">
+          <strong>${ans.id} ${ans.text}</strong><br>
+          <span class="status ${ans.response==='sim'?'completo':ans.response==='nao'?'emcurso':'pendente'}">${ans.response || '—'}</span>
+          ${ans.notes ? `<p class="small">${ans.notes}</p>` : ""}
+          ${ans.photo ? `<img src="${ans.photo}" class="photo-preview">` : ""}
+        </div>`).join("")}
         <button class="btn" onclick="exportPDF('${id}')">Exportar PDF</button>
         <button class="btn btn-secondary" onclick="exportExcel('${id}')">Exportar Excel</button>
         <button class="btn" style="background:#666" onclick="showView('relatorios')">Voltar</button>
       `;
+
+      // radar chart
+      setTimeout(() => {
+        const ctx = document.getElementById("radarChart");
+        if (ctx) {
+          new Chart(ctx, {
+            type: "radar",
+            data: {
+              labels: areas,
+              datasets: [{
+                label: "Pontuação %",
+                data: areaScores,
+                backgroundColor: "rgba(235, 10, 30, 0.2)",
+                borderColor: "#EB0A1E",
+                pointBackgroundColor: "#EB0A1E"
+              }]
+            },
+            options: {
+              scales: { r: { beginAtZero: true, max: 100 } },
+              plugins: { legend: { display: false } }
+            }
+          });
+        }
+      }, 100);
     };
 
     window.exportPDF = (id) => {
       const a = allAudits.find(x => x.id === id);
       const w = workshops.find(x => x.id === a.workshopId);
       const doc = new jsPDF();
-      doc.setFontSize(14);
-      doc.text(`Relatório - ${w ? w.name : a.workshopId}`, 14, 20);
+      doc.setFontSize(16);
+      doc.setTextColor(235, 10, 30);
+      doc.text("TOYOTA", 14, 20);
+      doc.setTextColor(0);
+      doc.setFontSize(12);
+      doc.text(`Relatório - ${w ? w.name : a.workshopId}`, 14, 30);
       doc.setFontSize(10);
-      doc.text(`Data: ${new Date(a.date).toLocaleString("pt-PT")} | Por: ${a.userEmail}`, 14, 28);
-      let y = 40;
+      doc.text(`Data: ${new Date(a.date).toLocaleString("pt-PT")} | Por: ${a.userEmail}`, 14, 38);
+      let y = 50;
       a.answers.forEach(ans => {
         if (y > 270) { doc.addPage(); y = 20; }
-        doc.text(`${ans.id} ${ans.text.substring(0, 90)}`, 14, y);
+        doc.text(`${ans.id} ${ans.text.substring(0, 85)}`, 14, y);
         doc.text(`Resposta: ${ans.response || "—"}`, 14, y + 5);
         if (ans.notes) doc.text(`Obs: ${ans.notes.substring(0, 70)}`, 14, y + 10);
         y += 16;
@@ -445,6 +489,36 @@
       XLSX.utils.book_append_sheet(wb, ws, "Auditoria");
       XLSX.writeFile(wb, `relatorio_${(w ? w.name : id).replace(/\s+/g,"_")}.xlsx`);
     };
+
+    async function changePassword() {
+      const newPass = document.getElementById("new-pass").value;
+      if (!newPass || newPass.length < 6) {
+        document.getElementById("pass-msg").textContent = "Password mínima de 6 caracteres";
+        return;
+      }
+      try {
+        await updatePassword(currentUser, newPass);
+        document.getElementById("pass-msg").textContent = "Password alterada com sucesso!";
+        document.getElementById("new-pass").value = "";
+      } catch (e) {
+        document.getElementById("pass-msg").textContent = "Erro: " + e.message + " (pode ser necessário re-login)";
+      }
+    }
+
+    async function addWorkshop() {
+      const name = document.getElementById("new-w-name").value.trim();
+      const address = document.getElementById("new-w-address").value.trim();
+      if (!name) return;
+      try {
+        await addDoc(collection(db, "workshops"), { name, address });
+        document.getElementById("w-msg").textContent = "Oficina criada!";
+        document.getElementById("new-w-name").value = "";
+        document.getElementById("new-w-address").value = "";
+        await loadWorkshops();
+      } catch (e) {
+        document.getElementById("w-msg").textContent = "Erro: " + e.message;
+      }
+    }
 
     async function createUser() {
       if (!isMaster) return;
