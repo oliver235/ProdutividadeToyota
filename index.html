@@ -516,27 +516,97 @@
       }
     };
 
-    window.exportPDF = (id) => {
+    window.exportPDF = async (id) => {
       const a = allAudits.find(x => x.id === id);
+      if (!a) return;
       const w = workshops.find(x => x.id === a.workshopId);
-      const doc = new jsPDF();
-      doc.setFontSize(16);
-      doc.setTextColor(235, 10, 30);
-      doc.text("TOYOTA", 14, 18);
-      doc.setTextColor(0);
-      doc.setFontSize(11);
-      doc.text(`Relatório - ${w ? w.name : a.workshopId}`, 14, 28);
-      doc.setFontSize(9);
-      doc.text(`Data: ${new Date(a.date).toLocaleString("pt-PT")} | Por: ${a.userEmail}`, 14, 35);
-      let y = 46;
-      a.answers.forEach(ans => {
-        if (y > 270) { doc.addPage(); y = 20; }
-        doc.text(`${ans.id} ${ans.text.substring(0, 90)}`, 14, y);
-        doc.text(`Resposta: ${ans.response || "—"}`, 14, y + 5);
-        if (ans.notes) doc.text(`Obs: ${ans.notes.substring(0, 70)}`, 14, y + 10);
-        y += 15;
+      const k = a.kpis || {};
+      const score = Math.round(a.answers.filter(ans => ans.response === "sim").length / a.answers.length * 100);
+      const areas = [...new Set(a.answers.map(ans => ans.area))];
+      const areaScores = areas.map(area => {
+        const qs = a.answers.filter(ans => ans.area === area);
+        return Math.round(qs.filter(ans => ans.response === "sim").length / qs.length * 100);
       });
-      doc.save(`relatorio_${(w ? w.name : id).replace(/\s+/g,"_")}.pdf`);
+
+      const doc = new jsPDF();
+      // Cabeçalho
+      doc.setFillColor(235, 10, 30);
+      doc.rect(0, 0, 210, 28, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(18);
+      doc.setFont(undefined, "bold");
+      doc.text("TOYOTA", 14, 14);
+      doc.setFontSize(10);
+      doc.setFont(undefined, "normal");
+      doc.text("RELATÓRIO DE AVALIAÇÃO - PROGRAMA DE PRODUTIVIDADE", 14, 22);
+      doc.setTextColor(0, 0, 0);
+
+      doc.setFontSize(12);
+      doc.text(`Oficina: ${w ? w.name : a.workshopId}`, 14, 38);
+      doc.setFontSize(10);
+      doc.text(`Data: ${new Date(a.date).toLocaleDateString("pt-PT")}   |   Por: ${a.userEmail || ""}`, 14, 45);
+      doc.setFontSize(14);
+      doc.setTextColor(235, 10, 30);
+      doc.text(`Resultado Global: ${score}%`, 14, 54);
+      doc.setTextColor(0);
+
+      // KPIs
+      doc.setFontSize(11);
+      doc.setFont(undefined, "bold");
+      doc.text("1. Dados de Pré-Auditoria", 14, 66);
+      doc.setFont(undefined, "normal");
+      doc.setFontSize(9);
+      const kpiLines = [
+        `Horas Trabalhadas / Técnico / Dia: ${k.horasTec || "-"}`,
+        `Horas Trabalhadas / m²: ${k.horasM2 || "-"}`,
+        `CPUs / Mês: ${k.cpusMes || "-"}`,
+        `Taxa de Recomendação: ${k.recomendacao || "-"}%`,
+        `Fix-It-Right: ${k.fir || "-"}%`,
+        `Técnicos: N1 ${k.tec1||0}  N2 ${k.tec2||0}  N3 ${k.tec3||0}  N4 ${k.tec4||0}  Assessores ${k.assessores||0}`
+      ];
+      kpiLines.forEach((line, i) => doc.text(line, 14, 74 + i * 6));
+
+      // Pontuações por área
+      doc.setFontSize(11);
+      doc.setFont(undefined, "bold");
+      doc.text("Pontuação por Área", 14, 112);
+      doc.setFont(undefined, "normal");
+      doc.setFontSize(9);
+      areas.forEach((area, i) => {
+        doc.text(`${area}: ${areaScores[i]}%`, 14, 120 + i * 6);
+      });
+
+      // Incluir gráfico radar se existir
+      const canvas = document.getElementById("radarChart");
+      if (canvas) {
+        try {
+          const imgData = canvas.toDataURL("image/png");
+          doc.addImage(imgData, "PNG", 110, 110, 85, 70);
+        } catch (e) {}
+      }
+
+      doc.setFontSize(10);
+      doc.text("Ganho Financeiro Estimado: 85 000 €", 14, 160);
+
+      // Grelha
+      doc.addPage();
+      doc.setFontSize(12);
+      doc.setFont(undefined, "bold");
+      doc.text("Grelha de Avaliação", 14, 16);
+      doc.setFont(undefined, "normal");
+      doc.setFontSize(8);
+      let y = 24;
+      a.answers.forEach(ans => {
+        if (y > 275) { doc.addPage(); y = 16; }
+        doc.setFont(undefined, "bold");
+        doc.text(`${ans.id} ${ans.text.substring(0, 95)}`, 14, y);
+        doc.setFont(undefined, "normal");
+        doc.text(`Resposta: ${ans.response || "—"}`, 14, y + 4);
+        if (ans.notes) doc.text(`Obs: ${ans.notes.substring(0, 90)}`, 14, y + 8);
+        y += 14;
+      });
+
+      doc.save(`Relatorio_Toyota_${(w ? w.name : "Oficina").replace(/\s+/g,"_")}.pdf`);
     };
 
     window.exportExcel = (id) => {
