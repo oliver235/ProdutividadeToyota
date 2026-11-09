@@ -1,295 +1,400 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Toyota Oficinas Checklist</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #222; }
-    #app { min-height: 100vh; display: flex; flex-direction: column; }
-    .header { background: #EB0A1E; color: white; padding: 12px 16px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 10; }
-    .logo { font-weight: bold; font-size: 18px; }
-    #header-title { font-size: 18px; font-weight: 600; }
-    #main-content { flex: 1; padding: 16px; padding-bottom: 80px; overflow-y: auto; }
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #ddd; display: flex; justify-content: space-around; padding: 8px 0 12px; z-index: 20; }
-    .nav-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; font-size: 11px; color: #666; gap: 2px; padding: 4px 8px; }
-    .nav-btn.active { color: #EB0A1E; }
-    .nav-btn .icon { font-size: 20px; }
-    .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .search-bar { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 12px; font-size: 16px; }
-    .workshop-card { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-    .status { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-    .status.completo { background: #e6f4ea; color: #137333; }
-    .status.emcurso { background: #fff3e0; color: #e65100; }
-    .status.pendente { background: #f5f5f5; color: #666; }
-    .btn { background: #EB0A1E; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 600; width: 100%; cursor: pointer; margin-top: 8px; }
-    .form-group { margin-bottom: 14px; }
-    .form-group label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 14px; }
-    .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
-    .buttons-row { display: flex; gap: 8px; margin: 8px 0; }
-    .btn-choice { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid #ddd; background: white; font-weight: 600; }
-    .btn-choice.sim { border-color: #34a853; color: #34a853; }
-    .btn-choice.nao { border-color: #ea4335; color: #ea4335; }
-    .btn-choice.na { border-color: #9aa0a6; color: #9aa0a6; }
-    .btn-choice.active.sim { background: #34a853; color: white; }
-    .btn-choice.active.nao { background: #ea4335; color: white; }
-    .btn-choice.active.na { background: #9aa0a6; color: white; }
-    .photo-preview { max-width: 80px; max-height: 80px; border-radius: 6px; margin-right: 8px; }
-    .progress-bar { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; margin: 8px 0; }
-    .progress-fill { height: 100%; background: #EB0A1E; }
-    .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .stat-card { text-align: center; padding: 12px; }
-    .stat-value { font-size: 28px; font-weight: bold; color: #EB0A1E; }
-    .stat-label { font-size: 12px; color: #666; }
-    h3 { margin: 12px 0 8px; }
-    .small { font-size: 12px; color: #666; }
-    .flex { display: flex; justify-content: space-between; align-items: center; }
-  </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Toyota Oficinas</title>
+  <script src=https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js></script>
+  <script src=https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #222; }
+    #login-screen { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 24px; background: #EB0A1E; color: white; }
+    #login-screen h1 { text-align: center; margin-bottom: 24px; }
+    #login-screen input { width: 100%; padding: 14px; margin: 8px 0; border: none; border-radius: 8px; font-size: 16px; }
+    #login-screen button { width: 100%; padding: 14px; background: white; color: #EB0A1E; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; margin-top: 12px; }
+    .error { color: #ffeb3b; text-align: center; margin-top: 12px; }
+    #app { min-height: 100vh; display: flex; flex-direction: column; }
+    .header { background: #EB0A1E; color: white; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+    .logo { font-weight: bold; }
+    #main-content { flex: 1; padding: 16px; padding-bottom: 80px; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #ddd; display: flex; justify-content: space-around; padding: 8px 0 12px; }
+    .nav-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; font-size: 11px; color: #666; }
+    .nav-btn.active { color: #EB0A1E; }
+    .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .btn { background: #EB0A1E; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: 600; margin-top: 8px; }
+    .btn-secondary { background: #333; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 4px; }
+    .form-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+    .buttons-row { display: flex; gap: 8px; margin: 8px 0; }
+    .btn-choice { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid #ddd; background: white; font-size: 14px; }
+    .btn-choice.active.sim { background: #34a853; color: white; border-color: #34a853; }
+    .btn-choice.active.nao { background: #ea4335; color: white; border-color: #ea4335; }
+    .btn-choice.active.na { background: #9aa0a6; color: white; border-color: #9aa0a6; }
+    .status { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+    .status.completo { background: #e6f4ea; color: #137333; }
+    .status.emcurso { background: #fff3e0; color: #e65100; }
+    .small { font-size: 12px; color: #666; }
+    .logout, .admin-btn { background: transparent; border: 1px solid white; color: white; padding: 6px 12px; border-radius: 6px; }
+    .area-title { background: #EB0A1E; color: white; padding: 8px 12px; border-radius: 8px; margin: 16px 0 8px; font-weight: 600; }
+  </style>
 </head>
 <body>
-  <div id="app">
-    <header class="header">
-      <div class="logo">TOYOTA</div>
-      <div id="header-title">Oficinas</div>
-    </header>
-    <main id="main-content"></main>
-    <nav class="bottom-nav">
-      <button data-view="oficinas" class="nav-btn active"><span class="icon">🏢</span><span>Oficinas</span></button>
-      <button data-view="relatorios" class="nav-btn"><span class="icon">📄</span><span>Relatórios</span></button>
-      <button data-view="visao" class="nav-btn"><span class="icon">📊</span><span>Visão Geral</span></button>
-      <button data-view="criticas" class="nav-btn"><span class="icon">⚠️</span><span>Críticas</span></button>
-    </nav>
-  </div>
-
-  <script>
-    const { jsPDF } = window.jspdf;
-    const workshops = [
-      { id: "melisauto-odivelas", name: "Melisauto Odivelas", address: "Av. José Francisco Guerreiro Lote 1, 1675-076 Pontinha" },
-      { id: "jfc-paredes", name: "José Ferreira da Cruz", address: "Av. da República 146, 4580-193 Paredes" },
-      { id: "macedo-famalicao", name: "Macedo & Macedo Famalicão", address: "Av. 9 de Julho 462, 4760-102 Vila Nova de Famalicão" },
-      { id: "macedo-barcelos", name: "Macedo & Macedo Barcelos", address: "Av. Central 1161, 4755-227 Gamil" },
-      { id: "autoimperial-braganca", name: "Auto Imperial Bragança", address: "Av. das Cantarias 130, 5300-107 Bragança" },
-      { id: "coutauto-famalicao", name: "Coutauto Famalicão", address: "Rua Joaquim de Sá Leonardo Lote 8, 4760-042 Vila Nova de Famalicão" },
-      { id: "caetano-priorvelho", name: "Caetano Auto Prior Velho", address: "Rua Nacala 2, 2685-363 Prior Velho" },
-      { id: "caetano-porto", name: "Caetano Auto Porto", address: "Estrada da Circunvalação 12541-12581, Porto" }
-    ];
-    const questions = [
-      "Os EPIs estão a ser utilizados corretamente?",
-      "O equipamento está calibrado e em bom estado?",
-      "A área de trabalho está organizada e limpa?",
-      "A documentação está preenchida e atualizada?",
-      "Os elevadores têm certificação em dia?",
-      "As ferramentas estão limpas e identificadas?",
-      "O piso está livre de óleo e resíduos?",
-      "A iluminação é adequada em todas as zonas?"
-    ];
-    let currentView = "oficinas";
-    let currentWorkshopId = null;
-    let currentAudit = null;
-
-    function getState() {
-      return {
-        kpis: JSON.parse(localStorage.getItem("toyota_kpis") || "{}"),
-        audits: JSON.parse(localStorage.getItem("toyota_audits") || "[]")
-      };
-    }
-    function saveState(s) {
-      localStorage.setItem("toyota_kpis", JSON.stringify(s.kpis));
-      localStorage.setItem("toyota_audits", JSON.stringify(s.audits));
-    }
-    function showView(view) {
-      currentView = view;
-      document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-      const btn = document.querySelector(`[data-view="${view}"]`);
-      if (btn) btn.classList.add("active");
-      render();
-    }
-    function render() {
-      const main = document.getElementById("main-content");
-      const title = document.getElementById("header-title");
-      const state = getState();
-      if (currentView === "oficinas") {
-        title.textContent = "Oficinas";
-        let html = `<input type="text" class="search-bar" placeholder="Pesquisar oficina..." oninput="filterWorkshops(this.value)">`;
-        html += `<div id="workshop-list">`;
-        workshops.forEach(w => {
-          const audit = state.audits.find(a => a.workshopId === w.id);
-          const status = audit ? (audit.completed ? "completo" : "emcurso") : "pendente";
-          const stText = status === "completo" ? "Completo" : status === "emcurso" ? "Em curso" : "Pendente";
-          html += `<div class="card workshop-card" onclick="selectWorkshop('${w.id}')">
-            <div><strong>${w.name}</strong><br><span class="small">${w.address}</span></div>
-            <span class="status ${status}">${stText}</span>
-          </div>`;
-        });
-        main.innerHTML = html;
-      } else if (currentView === "dataEntry") {
-        title.textContent = "Introduzir Dados";
-        const w = workshops.find(x => x.id === currentWorkshopId);
-        const k = state.kpis[currentWorkshopId] || {};
-        main.innerHTML = `
-          <div class="card"><h3>${w.name}</h3><p class="small">${w.address}</p></div>
-          <div class="form-group"><label>Recomendação (%)</label><input type="number" id="recomendacao" min="0" max="100" value="${k.recomendacao||0}"></div>
-          <div class="form-group"><label>Fix-it-Right Q1 (%)</label><input type="number" id="fir1" min="0" max="100" value="${k.fir1||0}"></div>
-          <div class="form-group"><label>Fix-it-Right Q2 (%)</label><input type="number" id="fir2" min="0" max="100" value="${k.fir2||0}"></div>
-          <div class="form-group"><label>Fix-it-Right Q3 (%)</label><input type="number" id="fir3" min="0" max="100" value="${k.fir3||0}"></div>
-          <div class="form-group"><label>Técnicos Nível 1</label><input type="number" id="tec1" value="${k.tec1||0}"></div>
-          <div class="form-group"><label>Técnicos Nível 2</label><input type="number" id="tec2" value="${k.tec2||0}"></div>
-          <div class="form-group"><label>Técnicos Nível 3</label><input type="number" id="tec3" value="${k.tec3||0}"></div>
-          <div class="form-group"><label>Técnicos Nível 4</label><input type="number" id="tec4" value="${k.tec4||0}"></div>
-          <div class="form-group"><label>Lavadores</label><input type="number" id="lavadores" value="${k.lavadores||0}"></div>
-          <div class="form-group"><label>Assessores de Serviço</label><input type="number" id="assessores" value="${k.assessores||0}"></div>
-          <div class="form-group"><label>Número de Baias</label><input type="number" id="baias" value="${k.baias||0}"></div>
-          <div class="form-group"><label>CPUs (Client Paid Units/ano)</label><input type="number" id="cpus" value="${k.cpus||0}"></div>
-          <div class="form-group"><label>Garantias</label><input type="number" id="garantias" value="${k.garantias||0}"></div>
-          <div class="form-group"><label>Parque ProAce (%)</label><input type="number" id="proace" min="0" max="100" value="${k.proace||0}"></div>
-          <button class="btn" onclick="saveDataAndStart()">Guardar e Iniciar Auditoria</button>
-        `;
-      } else if (currentView === "checklist") {
-        title.textContent = "Auditoria";
-        const w = workshops.find(x => x.id === currentWorkshopId);
-        const audit = currentAudit || { answers: questions.map(q => ({question:q, response:null, notes:"", photos:[]})) };
-        let completed = audit.answers.filter(a => a.response).length;
-        let pct = Math.round((completed / questions.length) * 100);
-        let html = `<div class="card"><h3>${w.name}</h3><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><p class="small">${completed}/${questions.length} (${pct}%)</p></div>`;
-        audit.answers.forEach((a, i) => {
-          html += `<div class="card">
-            <strong>${i+1}. ${a.question}</strong>
-            <div class="buttons-row">
-              <button class="btn-choice sim ${a.response==='sim'?'active':''}" onclick="setResponse(${i},'sim')">Sim</button>
-              <button class="btn-choice nao ${a.response==='nao'?'active':''}" onclick="setResponse(${i},'nao')">Não</button>
-              <button class="btn-choice na ${a.response==='na'?'active':''}" onclick="setResponse(${i},'na')">N/A</button>
-            </div>
-            <textarea placeholder="Notas" onchange="setNotes(${i},this.value)">${a.notes||''}</textarea>
-            <input type="file" accept="image/*" capture="environment" onchange="addPhoto(${i},this)">
-            <div>${(a.photos||[]).map(p=>`<img src="${p}" class="photo-preview">`).join('')}</div>
-          </div>`;
-        });
-        html += `<button class="btn" onclick="finishAudit()">Concluir Auditoria</button>`;
-        main.innerHTML = html;
-        currentAudit = audit;
-      } else if (currentView === "relatorios") {
-        title.textContent = "Relatórios";
-        const audits = state.audits.slice().reverse();
-        if (!audits.length) { main.innerHTML = `<div class="card"><p>Nenhum relatório.</p></div>`; return; }
-        main.innerHTML = audits.map(a => {
-          const w = workshops.find(x => x.id === a.workshopId);
-          const score = Math.round(a.answers.filter(ans => ans.response === "sim").length / a.answers.length * 100);
-          return `<div class="card" onclick="viewReport('${a.id}')"><strong>${w?w.name:a.workshopId}</strong><br><span class="small">${new Date(a.date).toLocaleDateString("pt-PT")} • ${score}%</span></div>`;
-        }).join("");
-      } else if (currentView === "visao") {
-        title.textContent = "Visão Geral";
-        const audits = state.audits;
-        const avg = audits.length ? Math.round(audits.reduce((s,a)=>s+(a.answers.filter(ans=>ans.response==="sim").length/a.answers.length*100),0)/audits.length) : 0;
-        main.innerHTML = `
-          <div class="card">
-            <div class="kpi-grid">
-              <div class="stat-card"><div class="stat-value">${workshops.length}</div><div class="stat-label">Oficinas</div></div>
-              <div class="stat-card"><div class="stat-value">${avg}%</div><div class="stat-label">Média</div></div>
-            </div>
-            <div class="progress-bar"><div class="progress-fill" style="width:${avg}%"></div></div>
-          </div>
-        `;
-      } else if (currentView === "criticas") {
-        title.textContent = "Críticas";
-        const criticas = [];
-        state.audits.forEach(a => a.answers.forEach(ans => {
-          if (ans.response === "nao") {
-            const w = workshops.find(x => x.id === a.workshopId);
-            criticas.push({workshop: w?w.name:a.workshopId, question: ans.question, date: a.date});
-          }
-        }));
-        main.innerHTML = criticas.length ? criticas.map(c => `<div class="card"><strong>${c.workshop}</strong><p>${c.question}</p><span class="small">${new Date(c.date).toLocaleDateString("pt-PT")}</span></div>`).join("") : `<div class="card"><p>Nenhuma crítica.</p></div>`;
-      }
-    }
-    function selectWorkshop(id) { currentWorkshopId = id; showView("dataEntry"); }
-    function saveDataAndStart() {
-      const state = getState();
-      state.kpis[currentWorkshopId] = {
-        recomendacao: +document.getElementById("recomendacao").value,
-        fir1: +document.getElementById("fir1").value,
-        fir2: +document.getElementById("fir2").value,
-        fir3: +document.getElementById("fir3").value,
-        tec1: +document.getElementById("tec1").value,
-        tec2: +document.getElementById("tec2").value,
-        tec3: +document.getElementById("tec3").value,
-        tec4: +document.getElementById("tec4").value,
-        lavadores: +document.getElementById("lavadores").value,
-        assessores: +document.getElementById("assessores").value,
-        baias: +document.getElementById("baias").value,
-        cpus: +document.getElementById("cpus").value,
-        garantias: +document.getElementById("garantias").value,
-        proace: +document.getElementById("proace").value
-      };
-      saveState(state);
-      currentAudit = { id: Date.now().toString(), workshopId: currentWorkshopId, date: new Date().toISOString(), answers: questions.map(q => ({question:q, response:null, notes:"", photos:[]})), completed: false };
-      showView("checklist");
-    }
-    function setResponse(i, val) { if (currentAudit) { currentAudit.answers[i].response = val; render(); } }
-    function setNotes(i, val) { if (currentAudit) currentAudit.answers[i].notes = val; }
-    function addPhoto(i, input) {
-      if (!input.files[0]) return;
-      const reader = new FileReader();
-      reader.onload = e => { currentAudit.answers[i].photos.push(e.target.result); render(); };
-      reader.readAsDataURL(input.files[0]);
-    }
-    function finishAudit() {
-      if (!currentAudit) return;
-      currentAudit.completed = true;
-      const state = getState();
-      const idx = state.audits.findIndex(a => a.id === currentAudit.id);
-      if (idx >= 0) state.audits[idx] = currentAudit; else state.audits.push(currentAudit);
-      saveState(state);
-      alert("Auditoria guardada!");
-      showView("relatorios");
-    }
-    function viewReport(id) {
-      const state = getState();
-      const a = state.audits.find(x => x.id === id);
-      const w = workshops.find(x => x.id === a.workshopId);
-      const score = Math.round(a.answers.filter(ans => ans.response === "sim").length / a.answers.length * 100);
-      document.getElementById("header-title").textContent = "Relatório";
-      document.getElementById("main-content").innerHTML = `
-        <div class="card"><h3>${w?w.name:a.workshopId}</h3><p class="small">${new Date(a.date).toLocaleString("pt-PT")}</p><div class="stat-value">${score}%</div></div>
-        ${a.answers.map((ans,i) => `<div class="card"><strong>${i+1}. ${ans.question}</strong><br><span class="status ${ans.response==='sim'?'completo':ans.response==='nao'?'emcurso':'pendente'}">${ans.response||'—'}</span>${ans.notes?`<p class="small">${ans.notes}</p>`:''}${(ans.photos||[]).map(p=>`<img src="${p}" class="photo-preview">`).join('')}</div>`).join('')}
-        <button class="btn" onclick="exportPDF('${id}')">PDF</button>
-        <button class="btn" style="background:#333" onclick="exportExcel('${id}')">Excel</button>
-        <button class="btn" style="background:#666" onclick="showView('relatorios')">Voltar</button>
-      `;
-    }
-    function exportPDF(id) {
-      const state = getState();
-      const a = state.audits.find(x => x.id === id);
-      const w = workshops.find(x => x.id === a.workshopId);
-      const doc = new jsPDF();
-      doc.text(`Relatório - ${w?w.name:a.workshopId}`, 14, 20);
-      doc.text(`Data: ${new Date(a.date).toLocaleString("pt-PT")}`, 14, 30);
-      let y = 40;
-      a.answers.forEach((ans, i) => {
-        if (y > 270) { doc.addPage(); y = 20; }
-        doc.text(`${i+1}. ${ans.question} → ${ans.response||'—'}`, 14, y);
-        y += 10;
-      });
-      doc.save("relatorio.pdf");
-    }
-    function exportExcel(id) {
-      const state = getState();
-      const a = state.audits.find(x => x.id === id);
-      const data = a.answers.map((ans, i) => ({N: i+1, Pergunta: ans.question, Resposta: ans.response||"", Notas: ans.notes||""}));
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Auditoria");
-      XLSX.writeFile(wb, "relatorio.xlsx");
-    }
-    function filterWorkshops(q) {
-      document.querySelectorAll(".workshop-card").forEach(c => {
-        c.style.display = c.innerText.toLowerCase().includes(q.toLowerCase()) ? "" : "none";
-      });
-    }
-    document.querySelectorAll(".nav-btn").forEach(btn => btn.addEventListener("click", () => showView(btn.dataset.view)));
-    showView("oficinas");
-  </script>
+  <div id="login-screen">
+    <h1>TOYOTA<br>Oficinas</h1>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Entrar</button>
+    <div id="login-error" class="error"></div>
+  </div>
+ 
+  <div id="app" style="display:none;">
+    <header class="header">
+      <div class="logo">TOYOTA</div>
+      <div id="header-title">Oficinas</div>
+      <div>
+        <button id="admin-btn" class="admin-btn" style="display:none;" onclick="showView('admin')">Admin</button>
+        <button class="logout" onclick="logout()">Sair</button>
+      </div>
+    </header>
+    <main id="main-content"></main>
+    <nav class="bottom-nav">
+      <button data-view="oficinas" class="nav-btn active">🏢<br>Oficinas</button>
+      <button data-view="relatorios" class="nav-btn">📄<br>Relatórios</button>
+      <button data-view="visao" class="nav-btn">📊<br>Visão</button>
+      <button data-view="criticas" class="nav-btn">⚠️<br>Críticas</button>
+    </nav>
+  </div>
+ 
+  <script type="module">
+    import { initializeApp } from https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js;
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js;
+    import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, setDoc } from https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js;
+ 
+    const { jsPDF } = window.jspdf;
+ 
+    const MASTER_EMAIL = jose.sousa@toyotacaetano.pt;
+    const firebaseConfig = {
+      apiKey: "AIzaSyBGKNteS2qFTEyBIglkeNWS05Tncz4Hygs",
+      authDomain: "produtividade-toyota.firebaseapp.com",
+      projectId: "produtividade-toyota",
+      storageBucket: "produtividade-toyota.firebasestorage.app",
+      messagingSenderId: "960937379651",
+      appId: "1:960937379651:web:b6fc915247c7a82ca511f6"
+    };
+ 
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const secondaryApp = initializeApp(firebaseConfig, "secondary");
+    const secondaryAuth = getAuth(secondaryApp);
+ 
+    const workshops = [
+      { id: "melisauto-odivelas", name: "Melisauto Odivelas", address: "Av. José Francisco Guerreiro Lote 1, Pontinha" },
+      { id: "jfc-paredes", name: "José Ferreira da Cruz", address: "Av. da República 146, Paredes" },
+      { id: "macedo-famalicao", name: "Macedo & Macedo Famalicão", address: "Av. 9 de Julho 462" },
+      { id: "autoimperial-braganca", name: "Auto Imperial Bragança", address: "Av. das Cantarias 130" },
+      { id: "coutauto-famalicao", name: "Coutauto Famalicão", address: "Rua Joaquim de Sá Leonardo Lote 8" },
+      { id: "caetano-priorvelho", name: "Caetano Auto Prior Velho", address: "Rua Nacala 2" }
+    ];
+ 
+    const questions = [
+      { area: "Agendamento", id: "1.1", text: "A oficina tem a capacidade de marcar um serviço no prazo máximo de 3 dias úteis?" },
+      { area: "Agendamento", id: "1.2", text: "O Lead Time de marcação transmitido na chamada de cliente mistério está de acordo com a informação disponível no Quadro de Marcações?" },
+      { area: "Agendamento", id: "1.3", text: "A atribuição dos trabalhos agendados é efetuada em conformidade com a matriz de competências e a certificação técnica de cada colaborador?" },
+      { area: "Agendamento", id: "1.4", text: "Os Assessores de Serviço utilizam os códigos de operação padronizados (OTT) de acordo com o tipo de serviço agendado? Para operações locais, utilizam códigos de operação tabelados (OTI)?" },
+      { area: "Agendamento", id: "1.5", text: "O planeamento da agenda é gerido ativamente para garantir uma taxa de ocupação do quadro de marcações de 110%?" },
+      { area: "Agendamento", id: "1.6", text: "Os trabalhos em curso (reparações de continuidade ou pendentes) encontram-se devidamente identificados e contabilizados na capacidade diária do quadro de marcações?" },
+      { area: "Agendamento", id: "1.7", text: "O cliente consegue estabelecer contacto com a oficina de uma forma rápida e eficaz? Em caso de não atendimento, é feita a devolução de chamada?" },
+      { area: "Agendamento", id: "1.8", text: "Durante o contacto telefónico para agendamento, o interlocutor questiona proactivamente o cliente sobre necessidades adicionais, serviços complementares ou campanhas técnicas?" },
+      { area: "Agendamento", id: "1.9", text: "A disponibilidade de slots de serviço na plataforma de Marcação Online (OSB) encontra-se alinhada e sincronizada com a capacidade real do DMS?" },
+      { area: "Agendamento", id: "1.10", text: "As encomendas de peças necessárias para as intervenções agendadas são realizadas via DMS através do sistema DPMM?" },
+      { area: "Agendamento", id: "1.11", text: "Encontra-se implementado o processo de geração atempada da folha de pré-preparação da visita?" },
+      { area: "Agendamento", id: "1.12", text: "A Oficina (equipa de AST's) faz reuniões de planeamento de trabalho no dia anterior?" },
+      { area: "Agendamento", id: "1.13", text: "Os trabalhos internos (PDS/pré-entrega, montagem de acessórios, check-up de 145 pontos) são agendados e integrados na capacidade da oficina?" },
+      { area: "Processo de Receção", id: "2.1", text: "O horário de funcionamento e acolhimento da Receção está desfasado com o início do turno da Oficina?" },
+      { area: "Processo de Receção", id: "2.2", text: "A dimensão da equipa de AST's está ajustada para permitir o atendimento de todos os clientes à hora marcada?" },
+      { area: "Processo de Receção", id: "2.3", text: "A Oficina atende os clientes estritamente à hora agendada, sem gerar filas de espera?" },
+      { area: "Processo de Receção", id: "2.4", text: "O intervalo de tempo entre as marcações permite realizar o processo de receção de acordo com o preconizado pela marca?" },
+      { area: "Processo de Receção", id: "2.5", text: "Durante o acolhimento (Receção Ativa), o Assessor de Serviço regista na Ordem de Reparação todas as necessidades adicionais identificadas?" },
+      { area: "Processo de Receção", id: "2.6", text: "Nas reparações que exigem pré-diagnóstico, é utilizado o questionário de diagnóstico aprovado pelo NMSC?" },
+      { area: "Processo de Receção", id: "2.7", text: "Existe um fluxo de comunicação estruturado entre a Receção e a Oficina?" },
+      { area: "Processo de Receção", id: "2.8", text: "Encontra-se definido um procedimento de contacto imediato perante faltas de comparência (no-shows)?" },
+      { area: "Processo de Receção", id: "2.9", text: "O Assessor de Serviço define com o cliente a hora de entrega da viatura antes de iniciar o serviço?" },
+      { area: "Processo de Receção", id: "2.10", text: "O Assessor de Serviço indicou ao cliente alguma forma de contacto com a oficina durante a realização do serviço?" },
+      { area: "Gestão Oficinal", id: "3.1", text: "A distribuição das Ordens de Reparação é efetuada considerando a certificação técnica, a complexidade e o tempo disponível?" },
+      { area: "Gestão Oficinal", id: "3.2", text: "Os técnicos realizam o registo eletrónico de tempos (picagens) a 100% para todas as intervenções?" },
+      { area: "Gestão Oficinal", id: "3.3", text: "O Quadro de Gestão Oficinal é mantido atualizado em tempo real?" },
+      { area: "Gestão Oficinal", id: "3.4", text: "Todas as viaturas presentes na oficina têm Ordem de Reparação aberta?" },
+      { area: "Gestão Oficinal", id: "3.5", text: "A gestão das viaturas em espera de serviço é feita regularmente de acordo com a prioridade?" },
+      { area: "Gestão Oficinal", id: "3.6", text: "No caso de não comparecimento de um cliente, a slot reservada é alocada novamente para serviços em buffer?" },
+      { area: "Gestão Oficinal", id: "3.7", text: "As peças e consumíveis são previamente separados e disponibilizados em carrinhos de pré-pulling?" },
+      { area: "Gestão Oficinal", id: "3.8", text: "Os postos de trabalho cumprem os princípios 5S?" },
+      { area: "Gestão Oficinal", id: "3.9", text: "A oficina dispõe de um processo/norma para alocar tempo na gestão da produção para serviços adicionais?" },
+      { area: "Gestão Oficinal", id: "3.10", text: "É realizado e documentado o Controlo de Qualidade pós-reparação (Fix-It-Right)?" },
+      { area: "Gestão Oficinal", id: "3.11", text: "A estação de serviço apresenta acessos desimpedidos e cumpre os critérios 5S?" },
+      { area: "Gestão Oficinal", id: "3.12", text: "Ao nível de recursos humanos e estações de serviço, a oficina está ajustada às necessidades?" },
+      { area: "Gestão Oficinal", id: "3.13", text: "A oficina utiliza um quadro visual para alocação de viaturas e prioridades de entrega?" },
+      { area: "Entrega", id: "4.1", text: "As viaturas são entregues à hora combinada com o cliente?" },
+      { area: "Entrega", id: "4.2", text: "Perante atrasos, o cliente é contactado com antecedência e a alteração é registada no DMS?" },
+      { area: "Entrega", id: "4.3", text: "No momento da entrega, o Assessor de Serviço explica a fatura item por item?" },
+      { area: "Entrega", id: "4.4", text: "No momento da explicação da fatura, o AST garante que todas as questões iniciais do cliente são explicadas?" },
+      { area: "Entrega", id: "4.5", text: "O AST acompanha o cliente até à viatura, retirando as proteções na sua presença?" }
+    ];
+ 
+    let currentUser = null;
+    let isMaster = false;
+    let currentView = "oficinas";
+    let currentWorkshopId = null;
+    let currentAudit = null;
+    let allAudits = [];
+ 
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        currentUser = user;
+        isMaster = user.email === MASTER_EMAIL;
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("app").style.display = "flex";
+        document.getElementById("admin-btn").style.display = isMaster ? "inline-block" : "none";
+        loadAudits();
+      } else {
+        currentUser = null;
+        isMaster = false;
+        document.getElementById("login-screen").style.display = "flex";
+        document.getElementById("app").style.display = "none";
+      }
+    });
+ 
+    window.login = async () => {
+      try {
+        await signInWithEmailAndPassword(auth, document.getElementById("email").value, document.getElementById("password").value);
+      } catch (e) {
+        document.getElementById("login-error").textContent = "Email ou password incorretos";
+      }
+    };
+ 
+    window.logout = () => signOut(auth);
+ 
+    async function loadAudits() {
+      const q = query(collection(db, "audits"), orderBy("date", "desc"));
+      const snap = await getDocs(q);
+      allAudits = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      render();
+    }
+ 
+    function showView(view) {
+      currentView = view;
+      document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+      document.querySelector(`[data-view="${view}"]`)?.classList.add("active");
+      render();
+    }
+ 
+    function render() {
+      const main = document.getElementById("main-content");
+      const title = document.getElementById("header-title");
+ 
+      if (currentView === "admin" && isMaster) {
+        title.textContent = "Administração";
+        main.innerHTML = `
+          <div class="card">
+            <h3>Criar nova conta</h3>
+            <div class="form-group"><label>Email</label><input type="email" id="new-email"></div>
+            <div class="form-group"><label>Password</label><input type="password" id="new-password"></div>
+            <button class="btn" onclick="createUser()">Criar conta</button>
+            <p id="admin-msg" class="small" style="margin-top:8px;"></p>
+          </div>
+          <div class="card"><h3>Contas criadas</h3><div id="users-list">A carregar...</div></div>
+        `;
+        loadUsers();
+        return;
+      }
+ 
+      if (currentView === "oficinas") {
+        title.textContent = "Oficinas";
+        main.innerHTML = workshops.map(w => {
+          const has = allAudits.some(a => a.workshopId === w.id && a.completed);
+          return `<div class="card" onclick="selectWorkshop('${w.id}')">
+            <strong>${w.name}</strong><br><span class="small">${w.address}</span>
+            <span class="status ${has ? 'completo' : 'emcurso'}" style="float:right">${has ? 'Com auditorias' : 'Sem'}</span>
+          </div>`;
+        }).join("");
+      } else if (currentView === "dataEntry") {
+        title.textContent = "Dados de Pré-Auditoria";
+        const w = workshops.find(x => x.id === currentWorkshopId);
+        main.innerHTML = `
+          <div class="card"><h3>${w.name}</h3></div>
+          <div class="form-group"><label>Horas Trabalhadas / Técnico / Dia</label><input type="number" step="0.1" id="horasTec"></div>
+          <div class="form-group"><label>Horas Trabalhadas / m²</label><input type="number" step="0.1" id="horasM2"></div>
+          <div class="form-group"><label>CPUs / Mês</label><input type="number" id="cpusMes"></div>
+          <div class="form-group"><label>Taxa de Recomendação (%)</label><input type="number" id="recomendacao"></div>
+          <div class="form-group"><label>Fix-It-Right (%)</label><input type="number" id="fir"></div>
+          <div class="form-group"><label>Técnicos Nível I</label><input type="number" id="tec1"></div>
+          <div class="form-group"><label>Técnicos Nível II</label><input type="number" id="tec2"></div>
+          <div class="form-group"><label>Técnicos Nível III</label><input type="number" id="tec3"></div>
+          <div class="form-group"><label>Técnicos Nível IV</label><input type="number" id="tec4"></div>
+          <div class="form-group"><label>Assessores de Serviço</label><input type="number" id="assessores"></div>
+          <button class="btn" onclick="saveDataAndStart()">Iniciar Auditoria</button>
+        `;
+      } else if (currentView === "checklist") {
+        title.textContent = "Auditoria";
+        const w = workshops.find(x => x.id === currentWorkshopId);
+        let html = `<div class="card"><strong>${w.name}</strong></div>`;
+        let lastArea = "";
+        currentAudit.answers.forEach((a, i) => {
+          if (a.area !== lastArea) {
+            html += `<div class="area-title">${a.area}</div>`;
+            lastArea = a.area;
+          }
+          html += `<div class="card">
+            <strong>${a.id} ${a.text}</strong>
+            <div class="buttons-row">
+              <button class="btn-choice ${a.response==='sim'?'active sim':''}" onclick="setResponse(${i},'sim')">Sim</button>
+              <button class="btn-choice ${a.response==='nao'?'active nao':''}" onclick="setResponse(${i},'nao')">Não</button>
+              <button class="btn-choice ${a.response==='na'?'active na':''}" onclick="setResponse(${i},'na')">N/A</button>
+            </div>
+            <textarea placeholder="Observações / Evidência" onchange="setNotes(${i},this.value)" style="width:100%;padding:8px;margin-top:8px;border:1px solid #ddd;border-radius:6px;">${a.notes||''}</textarea>
+          </div>`;
+        });
+        html += `<button class="btn" onclick="finishAudit()">Concluir e Guardar</button>`;
+        main.innerHTML = html;
+      } else if (currentView === "relatorios") {
+        title.textContent = "Relatórios";
+        if (!allAudits.length) { main.innerHTML = `<div class="card">Nenhum relatório.</div>`; return; }
+        main.innerHTML = allAudits.map(a => {
+          const w = workshops.find(x => x.id === a.workshopId);
+          const score = a.answers ? Math.round(a.answers.filter(ans => ans.response === "sim").length / a.answers.length * 100) : 0;
+          return `<div class="card" onclick="viewReport('${a.id}')">
+            <strong>${w ? w.name : a.workshopId}</strong><br>
+            <span class="small">${new Date(a.date).toLocaleDateString("pt-PT")} • ${score}% • por ${a.userEmail || "—"}</span>
+          </div>`;
+        }).join("");
+      } else {
+        title.textContent = currentView === "visao" ? "Visão Geral" : "Críticas";
+        main.innerHTML = `<div class="card">${allAudits.length} auditorias partilhadas.</div>`;
+      }
+    }
+ 
+    window.selectWorkshop = (id) => { currentWorkshopId = id; showView("dataEntry"); };
+ 
+    window.saveDataAndStart = () => {
+      currentAudit = {
+        workshopId: currentWorkshopId,
+        date: new Date().toISOString(),
+        userEmail: currentUser.email,
+        answers: questions.map(q => ({ ...q, response: null, notes: "" })),
+        kpis: {
+          horasTec: +document.getElementById("horasTec").value || 0,
+          horasM2: +document.getElementById("horasM2").value || 0,
+          cpusMes: +document.getElementById("cpusMes").value || 0,
+          recomendacao: +document.getElementById("recomendacao").value || 0,
+          fir: +document.getElementById("fir").value || 0,
+          tec1: +document.getElementById("tec1").value || 0,
+          tec2: +document.getElementById("tec2").value || 0,
+          tec3: +document.getElementById("tec3").value || 0,
+          tec4: +document.getElementById("tec4").value || 0,
+          assessores: +document.getElementById("assessores").value || 0
+        },
+        completed: false
+      };
+      showView("checklist");
+    };
+ 
+    window.setResponse = (i, val) => { if (currentAudit) { currentAudit.answers[i].response = val; render(); } };
+    window.setNotes = (i, val) => { if (currentAudit) currentAudit.answers[i].notes = val; };
+ 
+    window.finishAudit = async () => {
+      if (!currentAudit) return;
+      currentAudit.completed = true;
+      await addDoc(collection(db, "audits"), currentAudit);
+      alert("Auditoria guardada e partilhada!");
+      currentAudit = null;
+      await loadAudits();
+      showView("relatorios");
+    };
+ 
+    window.viewReport = (id) => {
+      const a = allAudits.find(x => x.id === id);
+      if (!a) return;
+      const w = workshops.find(x => x.id === a.workshopId);
+      const score = Math.round(a.answers.filter(ans => ans.response === "sim").length / a.answers.length * 100);
+      document.getElementById("header-title").textContent = "Relatório";
+      document.getElementById("main-content").innerHTML = `
+        <div class="card">
+          <h3>${w ? w.name : a.workshopId}</h3>
+          <p class="small">${new Date(a.date).toLocaleString("pt-PT")} • ${a.userEmail}</p>
+          <p><strong>Pontuação: ${score}%</strong></p>
+        </div>
+        ${a.answers.map(ans => `<div class="card"><strong>${ans.id} ${ans.text}</strong><br><span class="status ${ans.response==='sim'?'completo':ans.response==='nao'?'emcurso':'pendente'}">${ans.response || '—'}</span>${ans.notes ? `<p class="small">${ans.notes}</p>` : ''}</div>`).join("")}
+        <button class="btn" onclick="exportPDF('${id}')">Exportar PDF</button>
+        <button class="btn btn-secondary" onclick="exportExcel('${id}')">Exportar Excel</button>
+        <button class="btn" style="background:#666" onclick="showView('relatorios')">Voltar</button>
+      `;
+    };
+ 
+    window.exportPDF = (id) => {
+      const a = allAudits.find(x => x.id === id);
+      const w = workshops.find(x => x.id === a.workshopId);
+      const doc = new jsPDF();
+      doc.setFontSize(14);
+      doc.text(`Relatório - ${w ? w.name : a.workshopId}`, 14, 20);
+      doc.setFontSize(10);
+      doc.text(`Data: ${new Date(a.date).toLocaleString("pt-PT")} | Por: ${a.userEmail}`, 14, 28);
+      let y = 40;
+      a.answers.forEach(ans => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.text(`${ans.id} ${ans.text.substring(0, 90)}`, 14, y);
+        doc.text(`Resposta: ${ans.response || "—"}`, 14, y + 5);
+        if (ans.notes) doc.text(`Obs: ${ans.notes.substring(0, 70)}`, 14, y + 10);
+        y += 16;
+      });
+      doc.save(`relatorio_${(w ? w.name : id).replace(/\s+/g,"_")}.pdf`);
+    };
+ 
+    window.exportExcel = (id) => {
+      const a = allAudits.find(x => x.id === id);
+      const w = workshops.find(x => x.id === a.workshopId);
+      const data = a.answers.map(ans => ({
+        Área: ans.area,
+        Questão: ans.id,
+        Descrição: ans.text,
+        Resposta: ans.response || "",
+        Observações: ans.notes || ""
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Auditoria");
+      XLSX.writeFile(wb, `relatorio_${(w ? w.name : id).replace(/\s+/g,"_")}.xlsx`);
+    };
+ 
+    window.createUser = async () => {
+      if (!isMaster) return;
+      const email = document.getElementById("new-email").value;
+      const password = document.getElementById("new-password").value;
+      if (!email || !password) return;
+      try {
+        await createUserWithEmailAndPassword(secondaryAuth, email, password);
+        await setDoc(doc(db, "users", email), { email, createdAt: new Date().toISOString(), createdBy: currentUser.email });
+        document.getElementById("admin-msg").textContent = "Conta criada com sucesso!";
+        document.getElementById("new-email").value = "";
+        document.getElementById("new-password").value = "";
+        loadUsers();
+      } catch (e) {
+        document.getElementById("admin-msg").textContent = "Erro: " + e.message;
+      }
+    };
+ 
+    async function loadUsers() {
+      const snap = await getDocs(collection(db, "users"));
+      const list = snap.docs.map(d => d.data());
+      document.getElementById("users-list").innerHTML = list.length
+        ? list.map(u => `<div class="small">${u.email}</div>`).join("")
+        : "Nenhuma conta criada ainda.";
+    }
+ 
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => showView(btn.dataset.view));
+    });
+  </script>
 </body>
 </html>
