@@ -9,12 +9,12 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #222; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8f9fa; color: #212529; }
     #login-screen {
       min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #EB0A1E; padding: 20px;
     }
     .login-box {
-      background: white; border-radius: 16px; padding: 32px 24px; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center;
+      background: white; border-radius: 16px; padding: 32px 24px; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); text-align: center;
     }
     .login-box h1 { color: #EB0A1E; font-size: 28px; font-weight: 800; margin-bottom: 4px; letter-spacing: 1px; }
     .login-box .subtitle { color: #666; font-size: 14px; margin-bottom: 28px; }
@@ -24,34 +24,43 @@
     #login-btn:disabled { opacity: 0.6; }
     #login-error { color: #c0392b; font-size: 14px; margin-top: 12px; min-height: 20px; }
     #app { min-height: 100vh; display: flex; flex-direction: column; }
-    .header { background: #EB0A1E; color: white; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
-    .logo { font-weight: bold; }
-    #main-content { flex: 1; padding: 16px; padding-bottom: 80px; }
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #ddd; display: flex; justify-content: space-around; padding: 8px 0 12px; }
-    .nav-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; font-size: 11px; color: #666; }
-    .nav-btn.active { color: #EB0A1E; }
-    .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .header { background: #EB0A1E; color: white; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+    .logo { font-weight: 800; letter-spacing: 1px; }
+    #main-content { flex: 1; padding: 16px; padding-bottom: 90px; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e9ecef; display: flex; justify-content: space-around; padding: 10px 0 16px; }
+    .nav-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; font-size: 11px; color: #6c757d; }
+    .nav-btn.active { color: #EB0A1E; font-weight: 600; }
+    .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
     .btn { background: #EB0A1E; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: 600; margin-top: 8px; }
-    .btn-secondary { background: #333; }
+    .btn-secondary { background: #495057; }
+    .btn-danger { background: #dc3545; }
     .form-group { margin-bottom: 12px; }
-    .form-group label { display: block; font-weight: 600; margin-bottom: 4px; }
-    .form-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 14px; }
+    .form-group input { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; }
     .buttons-row { display: flex; gap: 8px; margin: 8px 0; }
-    .btn-choice { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid #ddd; background: white; font-size: 14px; }
-    .btn-choice.active.sim { background: #34a853; color: white; border-color: #34a853; }
-    .btn-choice.active.nao { background: #ea4335; color: white; border-color: #ea4335; }
-    .btn-choice.active.na { background: #9aa0a6; color: white; border-color: #9aa0a6; }
+    .btn-choice { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid #dee2e6; background: white; font-size: 14px; }
+    .btn-choice.active.sim { background: #28a745; color: white; border-color: #28a745; }
+    .btn-choice.active.nao { background: #dc3545; color: white; border-color: #dc3545; }
+    .btn-choice.active.na { background: #6c757d; color: white; border-color: #6c757d; }
     .status { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-    .status.completo { background: #e6f4ea; color: #137333; }
-    .status.emcurso { background: #fff3e0; color: #e65100; }
-    .small { font-size: 12px; color: #666; }
+    .status.completo { background: #d4edda; color: #155724; }
+    .status.emcurso { background: #fff3cd; color: #856404; }
+    .small { font-size: 12px; color: #6c757d; }
     .logout, .admin-btn { background: transparent; border: 1px solid white; color: white; padding: 6px 12px; border-radius: 6px; }
     .area-title { background: #EB0A1E; color: white; padding: 8px 12px; border-radius: 8px; margin: 16px 0 8px; font-weight: 600; }
-    .photo-preview { max-width: 100%; max-height: 120px; margin-top: 8px; border-radius: 8px; }
-    .chart-container { background: white; border-radius: 12px; padding: 12px; margin: 12px 0; }
-    .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
-    .score-item { background: #f8f8f8; padding: 10px; border-radius: 8px; text-align: center; }
-    .score-item strong { display: block; font-size: 18px; color: #EB0A1E; }
+    .photo-preview { max-width: 100%; max-height: 140px; margin-top: 8px; border-radius: 8px; }
+    .chart-container { background: white; border-radius: 12px; padding: 16px; margin: 12px 0; }
+    .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+    .score-item { background: #f8f9fa; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #e9ecef; }
+    .score-item strong { display: block; font-size: 20px; color: #EB0A1E; }
+    .report-header { text-align: center; background: white; padding: 20px 16px; border-radius: 12px; margin-bottom: 12px; border-bottom: 4px solid #EB0A1E; }
+    .kpi-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .kpi-table th, .kpi-table td { border: 1px solid #dee2e6; padding: 8px; text-align: left; }
+    .kpi-table th { background: #EB0A1E; color: white; }
+    .gain-box { background: #d4edda; border: 1px solid #c3e6cb; padding: 16px; text-align: center; border-radius: 8px; font-size: 18px; font-weight: 700; color: #155724; margin: 12px 0; }
+    .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .compare-table th, .compare-table td { border: 1px solid #dee2e6; padding: 8px; text-align: center; }
+    .compare-table th { background: #343a40; color: white; }
   </style>
 </head>
 <body>
@@ -80,14 +89,13 @@
       <button data-view="oficinas" class="nav-btn active">🏢<br>Oficinas</button>
       <button data-view="relatorios" class="nav-btn">📄<br>Relatórios</button>
       <button data-view="visao" class="nav-btn">📊<br>Visão</button>
-      <button data-view="criticas" class="nav-btn">⚠️<br>Críticas</button>
     </nav>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const { jsPDF } = window.jspdf;
 
@@ -334,9 +342,33 @@
             <span class="small">${new Date(a.date).toLocaleDateString("pt-PT")} • ${score}% • por ${a.userEmail || "—"}</span>
           </div>`;
         }).join("");
-      } else {
-        title.textContent = currentView === "visao" ? "Visão Geral" : "Críticas";
-        main.innerHTML = `<div class="card">${allAudits.length} auditorias partilhadas.</div>`;
+      } else if (currentView === "visao") {
+        title.textContent = "Visão Geral";
+        if (!allAudits.length) { main.innerHTML = `<div class="card">Sem dados para comparar.</div>`; return; }
+        const byWorkshop = {};
+        allAudits.forEach(a => {
+          if (!byWorkshop[a.workshopId]) byWorkshop[a.workshopId] = [];
+          byWorkshop[a.workshopId].push(a);
+        });
+        let rows = "";
+        Object.keys(byWorkshop).forEach(wid => {
+          const ws = workshops.find(x => x.id === wid);
+          const audits = byWorkshop[wid];
+          const avg = Math.round(audits.reduce((sum, a) => {
+            const s = a.answers ? a.answers.filter(ans => ans.response === "sim").length / a.answers.length * 100 : 0;
+            return sum + s;
+          }, 0) / audits.length);
+          rows += `<tr><td>${ws ? ws.name : wid}</td><td>${audits.length}</td><td><strong>${avg}%</strong></td></tr>`;
+        });
+        main.innerHTML = `
+          <div class="card">
+            <h3>Comparação entre Oficinas</h3>
+            <table class="compare-table">
+              <tr><th>Oficina</th><th>Auditorias</th><th>Média</th></tr>
+              ${rows}
+            </table>
+          </div>
+        `;
       }
     }
 
@@ -394,30 +426,56 @@
         const qs = a.answers.filter(ans => ans.area === area);
         return Math.round(qs.filter(ans => ans.response === "sim").length / qs.length * 100);
       });
+      const k = a.kpis || {};
+      const canDelete = currentUser && a.userEmail === currentUser.email;
 
       document.getElementById("header-title").textContent = "Relatório";
       document.getElementById("main-content").innerHTML = `
-        <div class="card" style="text-align:center;">
+        <div class="report-header">
           <div style="font-size:32px;font-weight:800;color:#EB0A1E;letter-spacing:3px;">TOYOTA</div>
-          <h3 style="margin:8px 0;">${w ? w.name : a.workshopId}</h3>
-          <p class="small">${new Date(a.date).toLocaleString("pt-PT")} • ${a.userEmail}</p>
-          <p style="font-size:20px;margin:8px 0;"><strong>Resultado Global: ${score}%</strong></p>
+          <div style="font-size:13px;color:#666;margin-top:4px;">RELATÓRIO DE AVALIAÇÃO - PROGRAMA DE PRODUTIVIDADE</div>
+          <h3 style="margin:12px 0 4px;">${w ? w.name : a.workshopId}</h3>
+          <p class="small">${new Date(a.date).toLocaleDateString("pt-PT")} • ${a.userEmail || ""}</p>
+          <p style="font-size:22px;margin-top:8px;color:#EB0A1E;"><strong>${score}%</strong></p>
         </div>
+
+        <div class="card">
+          <h4 style="margin-bottom:10px;">Dados de Pré-Auditoria</h4>
+          <table class="kpi-table">
+            <tr><th>Indicador</th><th>Valor</th></tr>
+            <tr><td>Horas Trabalhadas / Técnico / Dia</td><td>${k.horasTec || "-"}</td></tr>
+            <tr><td>Horas Trabalhadas / m²</td><td>${k.horasM2 || "-"}</td></tr>
+            <tr><td>CPUs / Mês</td><td>${k.cpusMes || "-"}</td></tr>
+            <tr><td>Taxa de Recomendação</td><td>${k.recomendacao || "-"}%</td></tr>
+            <tr><td>Fix-It-Right</td><td>${k.fir || "-"}%</td></tr>
+          </table>
+          <div style="margin-top:12px;font-size:14px;">
+            <strong>Técnicos:</strong> N1 ${k.tec1||0} · N2 ${k.tec2||0} · N3 ${k.tec3||0} · N4 ${k.tec4||0} · Assessores ${k.assessores||0}
+          </div>
+        </div>
+
         <div class="score-grid">
           ${areas.map((area, i) => `<div class="score-item"><strong>${areaScores[i]}%</strong><span class="small">${area}</span></div>`).join("")}
         </div>
+
         <div class="chart-container">
-          <canvas id="radarChart" height="260"></canvas>
+          <canvas id="radarChart" height="280"></canvas>
         </div>
+
+        <div class="gain-box">Ganho Financeiro Estimado<br>85 000 €</div>
+
+        <h4 style="margin:16px 0 8px;">Grelha de Avaliação</h4>
         ${a.answers.map(ans => `<div class="card">
           <strong>${ans.id} ${ans.text}</strong><br>
           <span class="status ${ans.response==='sim'?'completo':ans.response==='nao'?'emcurso':'pendente'}">${ans.response || '—'}</span>
-          ${ans.notes ? `<p class="small">${ans.notes}</p>` : ""}
+          ${ans.notes ? `<p class="small" style="margin-top:6px;">${ans.notes}</p>` : ""}
           ${ans.photo ? `<img src="${ans.photo}" class="photo-preview">` : ""}
         </div>`).join("")}
+
         <button class="btn" onclick="exportPDF('${id}')">Exportar PDF</button>
         <button class="btn btn-secondary" onclick="exportExcel('${id}')">Exportar Excel</button>
-        <button class="btn" style="background:#666" onclick="showView('relatorios')">Voltar</button>
+        ${canDelete ? `<button class="btn btn-danger" onclick="deleteAudit('${id}')">Eliminar Auditoria</button>` : ""}
+        <button class="btn" style="background:#6c757d" onclick="showView('relatorios')">Voltar</button>
       `;
 
       setTimeout(() => {
@@ -430,7 +488,7 @@
               datasets: [{
                 label: "Pontuação %",
                 data: areaScores,
-                backgroundColor: "rgba(235, 10, 30, 0.25)",
+                backgroundColor: "rgba(235, 10, 30, 0.18)",
                 borderColor: "#EB0A1E",
                 pointBackgroundColor: "#EB0A1E",
                 borderWidth: 2
@@ -443,28 +501,40 @@
             }
           });
         }
-      }, 150);
+      }, 200);
+    };
+
+    window.deleteAudit = async (id) => {
+      if (!confirm("Eliminar esta auditoria permanentemente?")) return;
+      try {
+        await deleteDoc(doc(db, "audits", id));
+        alert("Auditoria eliminada.");
+        await loadAudits();
+        showView("relatorios");
+      } catch (e) {
+        alert("Erro ao eliminar: " + e.message);
+      }
     };
 
     window.exportPDF = (id) => {
       const a = allAudits.find(x => x.id === id);
       const w = workshops.find(x => x.id === a.workshopId);
       const doc = new jsPDF();
-      doc.setFontSize(18);
+      doc.setFontSize(16);
       doc.setTextColor(235, 10, 30);
-      doc.text("TOYOTA", 14, 20);
+      doc.text("TOYOTA", 14, 18);
       doc.setTextColor(0);
-      doc.setFontSize(12);
-      doc.text(`Relatório - ${w ? w.name : a.workshopId}`, 14, 30);
-      doc.setFontSize(10);
-      doc.text(`Data: ${new Date(a.date).toLocaleString("pt-PT")} | Por: ${a.userEmail}`, 14, 38);
-      let y = 50;
+      doc.setFontSize(11);
+      doc.text(`Relatório - ${w ? w.name : a.workshopId}`, 14, 28);
+      doc.setFontSize(9);
+      doc.text(`Data: ${new Date(a.date).toLocaleString("pt-PT")} | Por: ${a.userEmail}`, 14, 35);
+      let y = 46;
       a.answers.forEach(ans => {
         if (y > 270) { doc.addPage(); y = 20; }
-        doc.text(`${ans.id} ${ans.text.substring(0, 85)}`, 14, y);
+        doc.text(`${ans.id} ${ans.text.substring(0, 90)}`, 14, y);
         doc.text(`Resposta: ${ans.response || "—"}`, 14, y + 5);
         if (ans.notes) doc.text(`Obs: ${ans.notes.substring(0, 70)}`, 14, y + 10);
-        y += 16;
+        y += 15;
       });
       doc.save(`relatorio_${(w ? w.name : id).replace(/\s+/g,"_")}.pdf`);
     };
