@@ -32,7 +32,7 @@
       background: white;
       color: #222;
     }
-    #login-screen button {
+    #login-btn {
       width: 100%;
       max-width: 340px;
       padding: 16px;
@@ -45,8 +45,8 @@
       margin-top: 16px;
       cursor: pointer;
     }
-    #login-screen button:disabled { opacity: 0.6; }
-    .error { color: #fff3cd; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-top: 16px; text-align: center; max-width: 340px; }
+    #login-btn:disabled { opacity: 0.6; }
+    .error { color: #fff3cd; background: rgba(0,0,0,0.25); padding: 12px; border-radius: 8px; margin-top: 16px; text-align: center; max-width: 340px; display: none; }
     #app { min-height: 100vh; display: flex; flex-direction: column; }
     .header { background: #EB0A1E; color: white; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
     .logo { font-weight: bold; }
@@ -79,8 +79,8 @@
     <p>Oficinas • Programa de Produtividade</p>
     <input type="email" id="email" placeholder="Email" autocomplete="username">
     <input type="password" id="password" placeholder="Password" autocomplete="current-password">
-    <button id="login-btn" onclick="login()">Entrar</button>
-    <div id="login-error" class="error" style="display:none;"></div>
+    <button id="login-btn">Entrar</button>
+    <div id="login-error" class="error"></div>
   </div>
  
   <div id="app" style="display:none;">
@@ -88,8 +88,8 @@
       <div class="logo">TOYOTA</div>
       <div id="header-title">Oficinas</div>
       <div>
-        <button id="admin-btn" class="admin-btn" style="display:none;" onclick="showView('admin')">Admin</button>
-        <button class="logout" onclick="logout()">Sair</button>
+        <button id="admin-btn" class="admin-btn" style="display:none;">Admin</button>
+        <button class="logout" id="logout-btn">Sair</button>
       </div>
     </header>
     <main id="main-content"></main>
@@ -200,7 +200,7 @@
       }
     });
  
-    window.login = async () => {
+    document.getElementById("login-btn").addEventListener("click", async () => {
       const btn = document.getElementById("login-btn");
       const errorEl = document.getElementById("login-error");
       const email = document.getElementById("email").value.trim();
@@ -216,14 +216,15 @@
       try {
         await signInWithEmailAndPassword(auth, email, password);
       } catch (e) {
-        errorEl.textContent = "Email ou password incorretos. Confirma se a conta existe no Firebase.";
+        errorEl.textContent = "Email ou password incorretos. Confirma se a conta existe no Firebase Authentication.";
         errorEl.style.display = "block";
         btn.disabled = false;
         btn.textContent = "Entrar";
       }
-    };
+    });
  
-    window.logout = () => signOut(auth);
+    document.getElementById("logout-btn").addEventListener("click", () => signOut(auth));
+    document.getElementById("admin-btn").addEventListener("click", () => showView("admin"));
  
     async function loadAudits() {
       try {
@@ -231,7 +232,6 @@
         const snap = await getDocs(q);
         allAudits = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       } catch (e) {
-        console.error(e);
         allAudits = [];
       }
       render();
@@ -255,11 +255,12 @@
             <h3>Criar nova conta</h3>
             <div class="form-group"><label>Email</label><input type="email" id="new-email"></div>
             <div class="form-group"><label>Password</label><input type="password" id="new-password"></div>
-            <button class="btn" onclick="createUser()">Criar conta</button>
+            <button class="btn" id="create-btn">Criar conta</button>
             <p id="admin-msg" class="small" style="margin-top:8px;"></p>
           </div>
           <div class="card"><h3>Contas criadas</h3><div id="users-list">A carregar...</div></div>
         `;
+        document.getElementById("create-btn").addEventListener("click", createUser);
         loadUsers();
         return;
       }
@@ -288,8 +289,9 @@
           <div class="form-group"><label>Técnicos Nível III</label><input type="number" id="tec3"></div>
           <div class="form-group"><label>Técnicos Nível IV</label><input type="number" id="tec4"></div>
           <div class="form-group"><label>Assessores de Serviço</label><input type="number" id="assessores"></div>
-          <button class="btn" onclick="saveDataAndStart()">Iniciar Auditoria</button>
+          <button class="btn" id="start-btn">Iniciar Auditoria</button>
         `;
+        document.getElementById("start-btn").addEventListener("click", saveDataAndStart);
       } else if (currentView === "checklist") {
         title.textContent = "Auditoria";
         const w = workshops.find(x => x.id === currentWorkshopId);
@@ -310,8 +312,9 @@
             <textarea placeholder="Observações / Evidência" onchange="setNotes(${i},this.value)" style="width:100%;padding:8px;margin-top:8px;border:1px solid #ddd;border-radius:6px;">${a.notes||''}</textarea>
           </div>`;
         });
-        html += `<button class="btn" onclick="finishAudit()">Concluir e Guardar</button>`;
+        html += `<button class="btn" id="finish-btn">Concluir e Guardar</button>`;
         main.innerHTML = html;
+        document.getElementById("finish-btn").addEventListener("click", finishAudit);
       } else if (currentView === "relatorios") {
         title.textContent = "Relatórios";
         if (!allAudits.length) { main.innerHTML = `<div class="card">Nenhum relatório.</div>`; return; }
@@ -331,7 +334,7 @@
  
     window.selectWorkshop = (id) => { currentWorkshopId = id; showView("dataEntry"); };
  
-    window.saveDataAndStart = () => {
+    function saveDataAndStart() {
       currentAudit = {
         workshopId: currentWorkshopId,
         date: new Date().toISOString(),
@@ -352,12 +355,12 @@
         completed: false
       };
       showView("checklist");
-    };
+    }
  
     window.setResponse = (i, val) => { if (currentAudit) { currentAudit.answers[i].response = val; render(); } };
     window.setNotes = (i, val) => { if (currentAudit) currentAudit.answers[i].notes = val; };
  
-    window.finishAudit = async () => {
+    async function finishAudit() {
       if (!currentAudit) return;
       currentAudit.completed = true;
       await addDoc(collection(db, "audits"), currentAudit);
@@ -365,7 +368,7 @@
       currentAudit = null;
       await loadAudits();
       showView("relatorios");
-    };
+    }
  
     window.viewReport = (id) => {
       const a = allAudits.find(x => x.id === id);
@@ -421,7 +424,7 @@
       XLSX.writeFile(wb, `relatorio_${(w ? w.name : id).replace(/\s+/g,"_")}.xlsx`);
     };
  
-    window.createUser = async () => {
+    async function createUser() {
       if (!isMaster) return;
       const email = document.getElementById("new-email").value;
       const password = document.getElementById("new-password").value;
@@ -436,7 +439,7 @@
       } catch (e) {
         document.getElementById("admin-msg").textContent = "Erro: " + e.message;
       }
-    };
+    }
  
     async function loadUsers() {
       const snap = await getDocs(collection(db, "users"));
