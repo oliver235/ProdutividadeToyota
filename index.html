@@ -11,21 +11,10 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #222; }
     #login-screen {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #EB0A1E;
-      padding: 20px;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #EB0A1E; padding: 20px;
     }
     .login-box {
-      background: white;
-      border-radius: 16px;
-      padding: 32px 24px;
-      width: 100%;
-      max-width: 380px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      text-align: center;
+      background: white; border-radius: 16px; padding: 32px 24px; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center;
     }
     .login-box h1 { color: #EB0A1E; font-size: 28px; font-weight: 800; margin-bottom: 4px; letter-spacing: 1px; }
     .login-box .subtitle { color: #666; font-size: 14px; margin-bottom: 28px; }
@@ -59,7 +48,10 @@
     .logout, .admin-btn { background: transparent; border: 1px solid white; color: white; padding: 6px 12px; border-radius: 6px; }
     .area-title { background: #EB0A1E; color: white; padding: 8px 12px; border-radius: 8px; margin: 16px 0 8px; font-weight: 600; }
     .photo-preview { max-width: 100%; max-height: 120px; margin-top: 8px; border-radius: 8px; }
-    canvas { max-width: 100%; }
+    .chart-container { background: white; border-radius: 12px; padding: 12px; margin: 12px 0; }
+    .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+    .score-item { background: #f8f8f8; padding: 10px; border-radius: 8px; text-align: center; }
+    .score-item strong { display: block; font-size: 18px; color: #EB0A1E; }
   </style>
 </head>
 <body>
@@ -208,7 +200,6 @@
         const snap = await getDocs(collection(db, "workshops"));
         workshops = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         if (workshops.length === 0) {
-          // seed inicial se não houver
           const initial = [
             { name: "Melisauto Odivelas", address: "Av. José Francisco Guerreiro Lote 1, Pontinha" },
             { name: "José Ferreira da Cruz", address: "Av. da República 146, Paredes" },
@@ -217,9 +208,7 @@
             { name: "Coutauto Famalicão", address: "Rua Joaquim de Sá Leonardo Lote 8" },
             { name: "Caetano Auto Prior Velho", address: "Rua Nacala 2" }
           ];
-          for (const w of initial) {
-            await addDoc(collection(db, "workshops"), w);
-          }
+          for (const w of initial) await addDoc(collection(db, "workshops"), w);
           const snap2 = await getDocs(collection(db, "workshops"));
           workshops = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
         }
@@ -256,13 +245,6 @@
             <p id="pass-msg" class="small"></p>
           </div>
           <div class="card">
-            <h3>Criar nova Oficina</h3>
-            <div class="form-group"><label>Nome</label><input type="text" id="new-w-name"></div>
-            <div class="form-group"><label>Morada</label><input type="text" id="new-w-address"></div>
-            <button class="btn" id="add-workshop-btn">Criar Oficina</button>
-            <p id="w-msg" class="small"></p>
-          </div>
-          <div class="card">
             <h3>Criar Conta de Utilizador</h3>
             <div class="form-group"><label>Email</label><input type="email" id="new-email"></div>
             <div class="form-group"><label>Password</label><input type="password" id="new-password"></div>
@@ -272,7 +254,6 @@
           <div class="card"><h3>Contas criadas</h3><div id="users-list">A carregar...</div></div>
         `;
         document.getElementById("change-pass-btn").addEventListener("click", changePassword);
-        document.getElementById("add-workshop-btn").addEventListener("click", addWorkshop);
         document.getElementById("create-btn").addEventListener("click", createUser);
         loadUsers();
         return;
@@ -280,13 +261,25 @@
 
       if (currentView === "oficinas") {
         title.textContent = "Oficinas";
-        main.innerHTML = workshops.map(w => {
+        let html = `<button class="btn" style="margin-bottom:16px;" id="show-add-workshop">+ Nova Oficina</button>
+                   <div id="add-workshop-form" style="display:none;" class="card">
+                     <div class="form-group"><label>Nome da Oficina</label><input type="text" id="new-w-name"></div>
+                     <div class="form-group"><label>Morada</label><input type="text" id="new-w-address"></div>
+                     <button class="btn" id="add-workshop-btn">Criar Oficina</button>
+                     <p id="w-msg" class="small"></p>
+                   </div>`;
+        html += workshops.map(w => {
           const has = allAudits.some(a => a.workshopId === w.id && a.completed);
           return `<div class="card" onclick="selectWorkshop('${w.id}')">
             <strong>${w.name}</strong><br><span class="small">${w.address || ""}</span>
             <span class="status ${has ? 'completo' : 'emcurso'}" style="float:right">${has ? 'Com auditorias' : 'Sem'}</span>
           </div>`;
-        }).join("") || "<div class='card'>Nenhuma oficina. Cria no Admin.</div>";
+        }).join("") || "<div class='card'>Nenhuma oficina.</div>";
+        main.innerHTML = html;
+        document.getElementById("show-add-workshop").addEventListener("click", () => {
+          document.getElementById("add-workshop-form").style.display = "block";
+        });
+        document.getElementById("add-workshop-btn").addEventListener("click", addWorkshop);
       } else if (currentView === "dataEntry") {
         title.textContent = "Dados de Pré-Auditoria";
         const w = workshops.find(x => x.id === currentWorkshopId);
@@ -377,10 +370,7 @@
     window.setPhoto = (i, input) => {
       if (!currentAudit || !input.files[0]) return;
       const reader = new FileReader();
-      reader.onload = e => {
-        currentAudit.answers[i].photo = e.target.result;
-        render();
-      };
+      reader.onload = e => { currentAudit.answers[i].photo = e.target.result; render(); };
       reader.readAsDataURL(input.files[0]);
     };
 
@@ -399,7 +389,6 @@
       if (!a) return;
       const w = workshops.find(x => x.id === a.workshopId);
       const score = Math.round(a.answers.filter(ans => ans.response === "sim").length / a.answers.length * 100);
-      // scores por área
       const areas = [...new Set(a.answers.map(ans => ans.area))];
       const areaScores = areas.map(area => {
         const qs = a.answers.filter(ans => ans.area === area);
@@ -409,11 +398,16 @@
       document.getElementById("header-title").textContent = "Relatório";
       document.getElementById("main-content").innerHTML = `
         <div class="card" style="text-align:center;">
-          <div style="font-size:28px;font-weight:800;color:#EB0A1E;letter-spacing:2px;">TOYOTA</div>
-          <h3>${w ? w.name : a.workshopId}</h3>
+          <div style="font-size:32px;font-weight:800;color:#EB0A1E;letter-spacing:3px;">TOYOTA</div>
+          <h3 style="margin:8px 0;">${w ? w.name : a.workshopId}</h3>
           <p class="small">${new Date(a.date).toLocaleString("pt-PT")} • ${a.userEmail}</p>
-          <p><strong>Pontuação Global: ${score}%</strong></p>
-          <canvas id="radarChart" height="220"></canvas>
+          <p style="font-size:20px;margin:8px 0;"><strong>Resultado Global: ${score}%</strong></p>
+        </div>
+        <div class="score-grid">
+          ${areas.map((area, i) => `<div class="score-item"><strong>${areaScores[i]}%</strong><span class="small">${area}</span></div>`).join("")}
+        </div>
+        <div class="chart-container">
+          <canvas id="radarChart" height="260"></canvas>
         </div>
         ${a.answers.map(ans => `<div class="card">
           <strong>${ans.id} ${ans.text}</strong><br>
@@ -426,7 +420,6 @@
         <button class="btn" style="background:#666" onclick="showView('relatorios')">Voltar</button>
       `;
 
-      // radar chart
       setTimeout(() => {
         const ctx = document.getElementById("radarChart");
         if (ctx) {
@@ -437,25 +430,27 @@
               datasets: [{
                 label: "Pontuação %",
                 data: areaScores,
-                backgroundColor: "rgba(235, 10, 30, 0.2)",
+                backgroundColor: "rgba(235, 10, 30, 0.25)",
                 borderColor: "#EB0A1E",
-                pointBackgroundColor: "#EB0A1E"
+                pointBackgroundColor: "#EB0A1E",
+                borderWidth: 2
               }]
             },
             options: {
-              scales: { r: { beginAtZero: true, max: 100 } },
+              responsive: true,
+              scales: { r: { beginAtZero: true, max: 100, ticks: { stepSize: 20 } } },
               plugins: { legend: { display: false } }
             }
           });
         }
-      }, 100);
+      }, 150);
     };
 
     window.exportPDF = (id) => {
       const a = allAudits.find(x => x.id === id);
       const w = workshops.find(x => x.id === a.workshopId);
       const doc = new jsPDF();
-      doc.setFontSize(16);
+      doc.setFontSize(18);
       doc.setTextColor(235, 10, 30);
       doc.text("TOYOTA", 14, 20);
       doc.setTextColor(0);
@@ -501,7 +496,7 @@
         document.getElementById("pass-msg").textContent = "Password alterada com sucesso!";
         document.getElementById("new-pass").value = "";
       } catch (e) {
-        document.getElementById("pass-msg").textContent = "Erro: " + e.message + " (pode ser necessário re-login)";
+        document.getElementById("pass-msg").textContent = "Erro: " + e.message;
       }
     }
 
@@ -514,7 +509,9 @@
         document.getElementById("w-msg").textContent = "Oficina criada!";
         document.getElementById("new-w-name").value = "";
         document.getElementById("new-w-address").value = "";
+        document.getElementById("add-workshop-form").style.display = "none";
         await loadWorkshops();
+        render();
       } catch (e) {
         document.getElementById("w-msg").textContent = "Erro: " + e.message;
       }
