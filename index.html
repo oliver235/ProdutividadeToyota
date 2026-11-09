@@ -9,11 +9,44 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #222; }
-    #login-screen { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 24px; background: #EB0A1E; color: white; }
-    #login-screen h1 { text-align: center; margin-bottom: 24px; }
-    #login-screen input { width: 100%; padding: 14px; margin: 8px 0; border: none; border-radius: 8px; font-size: 16px; }
-    #login-screen button { width: 100%; padding: 14px; background: white; color: #EB0A1E; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; margin-top: 12px; }
-    .error { color: #ffeb3b; text-align: center; margin-top: 12px; }
+    #login-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 32px 24px;
+      background: linear-gradient(180deg, #EB0A1E 0%, #c4091a 100%);
+      color: white;
+    }
+    #login-screen h1 { font-size: 32px; text-align: center; margin-bottom: 8px; font-weight: 700; }
+    #login-screen p { text-align: center; margin-bottom: 32px; opacity: 0.9; }
+    #login-screen input {
+      width: 100%;
+      max-width: 340px;
+      padding: 16px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      background: white;
+      color: #222;
+    }
+    #login-screen button {
+      width: 100%;
+      max-width: 340px;
+      padding: 16px;
+      background: white;
+      color: #EB0A1E;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      margin-top: 16px;
+      cursor: pointer;
+    }
+    #login-screen button:disabled { opacity: 0.6; }
+    .error { color: #fff3cd; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-top: 16px; text-align: center; max-width: 340px; }
     #app { min-height: 100vh; display: flex; flex-direction: column; }
     .header { background: #EB0A1E; color: white; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
     .logo { font-weight: bold; }
@@ -42,11 +75,12 @@
 </head>
 <body>
   <div id="login-screen">
-    <h1>TOYOTA<br>Oficinas</h1>
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="login()">Entrar</button>
-    <div id="login-error" class="error"></div>
+    <h1>TOYOTA</h1>
+    <p>Oficinas • Programa de Produtividade</p>
+    <input type="email" id="email" placeholder="Email" autocomplete="username">
+    <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+    <button id="login-btn" onclick="login()">Entrar</button>
+    <div id="login-error" class="error" style="display:none;"></div>
   </div>
  
   <div id="app" style="display:none;">
@@ -167,19 +201,39 @@
     });
  
     window.login = async () => {
+      const btn = document.getElementById("login-btn");
+      const errorEl = document.getElementById("login-error");
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      errorEl.style.display = "none";
+      if (!email || !password) {
+        errorEl.textContent = "Preenche email e password";
+        errorEl.style.display = "block";
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "A entrar...";
       try {
-        await signInWithEmailAndPassword(auth, document.getElementById("email").value, document.getElementById("password").value);
+        await signInWithEmailAndPassword(auth, email, password);
       } catch (e) {
-        document.getElementById("login-error").textContent = "Email ou password incorretos";
+        errorEl.textContent = "Email ou password incorretos. Confirma se a conta existe no Firebase.";
+        errorEl.style.display = "block";
+        btn.disabled = false;
+        btn.textContent = "Entrar";
       }
     };
  
     window.logout = () => signOut(auth);
  
     async function loadAudits() {
-      const q = query(collection(db, "audits"), orderBy("date", "desc"));
-      const snap = await getDocs(q);
-      allAudits = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      try {
+        const q = query(collection(db, "audits"), orderBy("date", "desc"));
+        const snap = await getDocs(q);
+        allAudits = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      } catch (e) {
+        console.error(e);
+        allAudits = [];
+      }
       render();
     }
  
