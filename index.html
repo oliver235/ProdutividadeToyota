@@ -92,7 +92,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const { jsPDF } = window.jspdf;
 
@@ -210,12 +210,12 @@
         workshops = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         if (workshops.length === 0) {
           const initial = [
-            { name: "Melisauto Odivelas", address: "Av. José Francisco Guerreiro Lote 1, Pontinha" },
-            { name: "José Ferreira da Cruz", address: "Av. da República 146, Paredes" },
-            { name: "Macedo & Macedo Famalicão", address: "Av. 9 de Julho 462" },
-            { name: "Auto Imperial Bragança", address: "Av. das Cantarias 130" },
-            { name: "Coutauto Famalicão", address: "Rua Joaquim de Sá Leonardo Lote 8" },
-            { name: "Caetano Auto Prior Velho", address: "Rua Nacala 2" }
+            { name: "Melisauto Odivelas", address: "Av. José Francisco Guerreiro Lote 1, Pontinha", code: "" },
+            { name: "José Ferreira da Cruz", address: "Av. da República 146, Paredes", code: "" },
+            { name: "Macedo & Macedo Famalicão", address: "Av. 9 de Julho 462", code: "" },
+            { name: "Auto Imperial Bragança", address: "Av. das Cantarias 130", code: "" },
+            { name: "Coutauto Famalicão", address: "Rua Joaquim de Sá Leonardo Lote 8", code: "" },
+            { name: "Caetano Auto Prior Velho", address: "Rua Nacala 2", code: "" }
           ];
           for (const w of initial) await addDoc(collection(db, "workshops"), w);
           const snap2 = await getDocs(collection(db, "workshops"));
@@ -287,15 +287,20 @@
         let html = `<button class="btn" style="margin-bottom:16px;" id="show-add-workshop">+ Nova Oficina</button>
                    <div id="add-workshop-form" style="display:none;" class="card">
                      <div class="form-group"><label>Nome da Oficina</label><input type="text" id="new-w-name"></div>
+                     <div class="form-group"><label>Código da Oficina</label><input type="text" id="new-w-code"></div>
                      <div class="form-group"><label>Morada</label><input type="text" id="new-w-address"></div>
                      <button class="btn" id="add-workshop-btn">Criar Oficina</button>
                      <p id="w-msg" class="small"></p>
                    </div>`;
         html += workshops.map(w => {
           const has = allAudits.some(a => a.workshopId === w.id && a.completed);
-          return `<div class="card" onclick="selectWorkshop('${w.id}')">
-            <strong>${w.name}</strong><br><span class="small">${w.address || ""}</span>
-            <span class="status ${has ? 'completo' : 'emcurso'}" style="float:right">${has ? 'Com auditorias' : 'Sem'}</span>
+          return `<div class="card">
+            <div onclick="selectWorkshop('${w.id}')">
+              <strong>${w.name}</strong> ${w.code ? `<span class="small">(${w.code})</span>` : ""}<br>
+              <span class="small">${w.address || ""}</span>
+              <span class="status ${has ? 'completo' : 'emcurso'}" style="float:right">${has ? 'Com auditorias' : 'Sem'}</span>
+            </div>
+            <button class="btn" style="margin-top:8px;background:#495057;" onclick="editWorkshop('${w.id}')">Editar Código / Dados</button>
           </div>`;
         }).join("") || "<div class='card'>Nenhuma oficina.</div>";
         main.innerHTML = html;
@@ -308,7 +313,7 @@
         const w = workshops.find(x => x.id === currentWorkshopId);
         const gestores = getGestores();
         main.innerHTML = `
-          <div class="card"><h3>${w ? w.name : ""}</h3></div>
+          <div class="card"><h3>${w ? w.name : ""} ${w && w.code ? `(${w.code})` : ""}</h3></div>
           <div class="form-group">
             <label>Gestor de Área</label>
             <select id="gestorArea">
@@ -327,6 +332,12 @@
           <div class="form-group"><label>Objetivo Recomendação (%)</label><input type="number" id="objRecomendacao" value="80"></div>
           <div class="form-group"><label>Fix-It-Right (%)</label><input type="number" id="fir"></div>
           <div class="form-group"><label>Objetivo Fix-It-Right (%)</label><input type="number" id="objFir" value="80"></div>
+          <div class="form-group"><label>Qualidade de Marcação (%)</label><input type="number" id="qualMarcacao"></div>
+          <div class="form-group"><label>Objetivo Qualidade de Marcação (%)</label><input type="number" id="objQualMarcacao" value="80"></div>
+          <div class="form-group"><label>Eficiência Oficinal (%)</label><input type="number" id="eficOficinal"></div>
+          <div class="form-group"><label>Objetivo Eficiência Oficinal (%)</label><input type="number" id="objEficOficinal" value="80"></div>
+          <div class="form-group"><label>Capacidade Oficinal Real vs Plano de Negócio (%)</label><input type="number" id="capReal"></div>
+          <div class="form-group"><label>Objetivo Capacidade Real vs Plano (%)</label><input type="number" id="objCapReal" value="100"></div>
           <div class="form-group"><label>Técnicos Nível I</label><input type="number" id="tec1"></div>
           <div class="form-group"><label>Técnicos Nível II</label><input type="number" id="tec2"></div>
           <div class="form-group"><label>Técnicos Nível III</label><input type="number" id="tec3"></div>
@@ -342,7 +353,7 @@
       } else if (currentView === "checklist") {
         title.textContent = "Auditoria";
         const w = workshops.find(x => x.id === currentWorkshopId);
-        let html = `<div class="card"><strong>${w ? w.name : ""}</strong></div>`;
+        let html = `<div class="card"><strong>${w ? w.name : ""} ${w && w.code ? `(${w.code})` : ""}</strong></div>`;
         let lastArea = "";
         currentAudit.answers.forEach((a, i) => {
           if (a.area !== lastArea) {
@@ -376,7 +387,7 @@
           const w = workshops.find(x => x.id === a.workshopId);
           const score = a.answers ? Math.round(a.answers.filter(ans => ans.response === "sim").length / a.answers.length * 100) : 0;
           return `<div class="card" onclick="viewReport('${a.id}')">
-            <strong>${w ? w.name : a.workshopId}</strong><br>
+            <strong>${w ? w.name : a.workshopId} ${w && w.code ? `(${w.code})` : ""}</strong><br>
             <span class="small">${new Date(a.date).toLocaleDateString("pt-PT")} • ${score}% • por ${a.userEmail || "—"}</span>
           </div>`;
         }).join("");
@@ -396,7 +407,7 @@
             const s = a.answers ? a.answers.filter(ans => ans.response === "sim").length / a.answers.length * 100 : 0;
             return sum + s;
           }, 0) / audits.length);
-          rows += `<tr><td>${ws ? ws.name : wid}</td><td>${audits.length}</td><td><strong>${avg}%</strong></td></tr>`;
+          rows += `<tr><td>${ws ? ws.name : wid} ${ws && ws.code ? `(${ws.code})` : ""}</td><td>${audits.length}</td><td><strong>${avg}%</strong></td></tr>`;
         });
         main.innerHTML = `
           <div class="card">
@@ -411,6 +422,19 @@
     }
 
     window.selectWorkshop = (id) => { currentWorkshopId = id; showView("dataEntry"); };
+
+    window.editWorkshop = (id) => {
+      const w = workshops.find(x => x.id === id);
+      if (!w) return;
+      const name = prompt("Nome da Oficina:", w.name || "");
+      const code = prompt("Código da Oficina:", w.code || "");
+      const address = prompt("Morada:", w.address || "");
+      if (name !== null) {
+        updateDoc(doc(db, "workshops", id), { name, code: code || "", address: address || "" }).then(() => {
+          loadWorkshops().then(render);
+        });
+      }
+    };
 
     function saveDataAndStart() {
       currentAudit = {
@@ -431,6 +455,12 @@
           objRecomendacao: +document.getElementById("objRecomendacao").value || 0,
           fir: +document.getElementById("fir").value || 0,
           objFir: +document.getElementById("objFir").value || 0,
+          qualMarcacao: +document.getElementById("qualMarcacao").value || 0,
+          objQualMarcacao: +document.getElementById("objQualMarcacao").value || 0,
+          eficOficinal: +document.getElementById("eficOficinal").value || 0,
+          objEficOficinal: +document.getElementById("objEficOficinal").value || 0,
+          capReal: +document.getElementById("capReal").value || 0,
+          objCapReal: +document.getElementById("objCapReal").value || 0,
           tec1: +document.getElementById("tec1").value || 0,
           tec2: +document.getElementById("tec2").value || 0,
           tec3: +document.getElementById("tec3").value || 0,
@@ -486,7 +516,7 @@
         <div class="report-header">
           <div style="font-size:32px;font-weight:800;color:#EB0A1E;letter-spacing:3px;">TOYOTA</div>
           <div style="font-size:13px;color:#666;margin-top:4px;">RELATÓRIO DE AVALIAÇÃO - PROGRAMA DE PRODUTIVIDADE</div>
-          <h3 style="margin:12px 0 4px;">${w ? w.name : a.workshopId}</h3>
+          <h3 style="margin:12px 0 4px;">${w ? w.name : a.workshopId} ${w && w.code ? `(${w.code})` : ""}</h3>
           <p class="small">${new Date(a.date).toLocaleDateString("pt-PT")} • Gestor: ${k.gestorArea || "—"} • Pós-Venda: ${k.respPosVenda || "—"}</p>
           <p style="font-size:22px;margin-top:8px;color:#EB0A1E;"><strong>${score}%</strong></p>
         </div>
@@ -500,6 +530,9 @@
             <tr><td>CPUs / Mês</td><td>${k.cpusMes || "-"}</td><td>${k.objCpus || "-"}</td></tr>
             <tr><td>Taxa de Recomendação</td><td>${k.recomendacao || "-"}%</td><td>${k.objRecomendacao || "-"}%</td></tr>
             <tr><td>Fix-It-Right</td><td>${k.fir || "-"}%</td><td>${k.objFir || "-"}%</td></tr>
+            <tr><td>Qualidade de Marcação</td><td>${k.qualMarcacao || "-"}%</td><td>${k.objQualMarcacao || "-"}%</td></tr>
+            <tr><td>Eficiência Oficinal</td><td>${k.eficOficinal || "-"}%</td><td>${k.objEficOficinal || "-"}%</td></tr>
+            <tr><td>Capacidade Real vs Plano</td><td>${k.capReal || "-"}%</td><td>${k.objCapReal || "-"}%</td></tr>
           </table>
           <div style="margin-top:12px;font-size:14px;">
             <strong>Técnicos:</strong> N1 ${k.tec1||0} · N2 ${k.tec2||0} · N3 ${k.tec3||0} · N4 ${k.tec4||0} · PMT ${k.pmt||0}<br>
@@ -572,6 +605,36 @@
       } catch (e) { alert("Erro ao eliminar: " + e.message); }
     };
 
+    async function generateSpiderImage(labels, data) {
+      return new Promise(resolve => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 400;
+        canvas.height = 300;
+        const ctx = canvas.getContext("2d");
+        new Chart(ctx, {
+          type: "radar",
+          data: {
+            labels,
+            datasets: [{
+              label: "Pontuação %",
+              data,
+              backgroundColor: "rgba(235, 10, 30, 0.2)",
+              borderColor: "#EB0A1E",
+              pointBackgroundColor: "#EB0A1E",
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: false,
+            animation: false,
+            scales: { r: { beginAtZero: true, max: 100, ticks: { stepSize: 20 } } },
+            plugins: { legend: { display: false } }
+          }
+        });
+        setTimeout(() => resolve(canvas.toDataURL("image/png")), 300);
+      });
+    }
+
     window.exportPDF = async (id) => {
       const a = allAudits.find(x => x.id === id);
       if (!a) return;
@@ -615,7 +678,7 @@
       doc.text("RELATÓRIO DE AVALIAÇÃO", 12, 24);
       doc.setFontSize(9);
       doc.setFont(undefined, "normal");
-      doc.text(`Oficina: ${w ? w.name : a.workshopId}`, 12, 32);
+      doc.text(`Oficina: ${w ? w.name : a.workshopId} ${w && w.code ? `(${w.code})` : ""}`, 12, 32);
       doc.text(`Data da Visita: ${new Date(a.date).toLocaleDateString("pt-PT")}`, 12, 37);
       doc.text(`Gestor de Área: ${k.gestorArea || "—"}`, 12, 42);
       doc.text(`Responsável Pós-Venda: ${k.respPosVenda || "—"}`, 12, 47);
@@ -630,37 +693,32 @@
         ["Horas / m²", (k.horasM2||"-")+"%", (k.objHorasM2||"-")+"%"],
         ["CPUs / Mês", k.cpusMes||"-", k.objCpus||"-"],
         ["Taxa de Recomendação", (k.recomendacao||"-")+"%", (k.objRecomendacao||"-")+"%"],
-        ["Fix-It-Right", (k.fir||"-")+"%", (k.objFir||"-")+"%"]
+        ["Fix-It-Right", (k.fir||"-")+"%", (k.objFir||"-")+"%"],
+        ["Qualidade de Marcação", (k.qualMarcacao||"-")+"%", (k.objQualMarcacao||"-")+"%"],
+        ["Eficiência Oficinal", (k.eficOficinal||"-")+"%", (k.objEficOficinal||"-")+"%"],
+        ["Capacidade Real vs Plano", (k.capReal||"-")+"%", (k.objCapReal||"-")+"%"]
       ];
       kpiRows.forEach((r, i) => {
         doc.text(r[0], 12, 64 + i*5);
-        doc.text(String(r[1]), 90, 64 + i*5);
-        doc.text(String(r[2]), 130, 64 + i*5);
+        doc.text(String(r[1]), 95, 64 + i*5);
+        doc.text(String(r[2]), 140, 64 + i*5);
       });
 
       doc.setFontSize(9);
-      doc.text(`Técnicos: N1 ${k.tec1||0} | N2 ${k.tec2||0} | N3 ${k.tec3||0} | N4 ${k.tec4||0} | PMT ${k.pmt||0}`, 12, 95);
-      doc.text(`Assessores: N1 ${k.ast1||0} | N2 ${k.ast2||0} | Nível 100 ${k.ast100||0}`, 12, 101);
-
-      const canvas = document.getElementById("radarChart");
-      if (canvas) {
-        try {
-          const imgData = canvas.toDataURL("image/png");
-          doc.addImage(imgData, "PNG", 110, 55, 85, 70);
-        } catch (e) {}
-      }
+      doc.text(`Técnicos: N1 ${k.tec1||0} | N2 ${k.tec2||0} | N3 ${k.tec3||0} | N4 ${k.tec4||0} | PMT ${k.pmt||0}`, 12, 110);
+      doc.text(`Assessores: N1 ${k.ast1||0} | N2 ${k.ast2||0} | Nível 100 ${k.ast100||0}`, 12, 116);
 
       if (k.comentariosPre) {
         doc.setFontSize(9);
         doc.setFont(undefined, "bold");
-        doc.text("Diagnóstico Inicial - Resumo", 12, 115);
+        doc.text("Diagnóstico Inicial - Resumo", 12, 128);
         doc.setFont(undefined, "normal");
         doc.setFontSize(8);
         const lines = doc.splitTextToSize(k.comentariosPre, 180);
-        doc.text(lines, 12, 122);
+        doc.text(lines, 12, 135);
       }
 
-      // Página 2 - Grelha
+      // Página 2 - Grelha com spider por área
       doc.addPage();
       page++;
       addHeaderFooter(doc, page);
@@ -670,23 +728,26 @@
       doc.text("Grelha de Avaliação", 12, 24);
 
       let y = 32;
-      areas.forEach(area => {
-        if (y > 250) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+      for (const area of areas) {
+        if (y > 220) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
         doc.setFontSize(10);
         doc.setFont(undefined, "bold");
         doc.setTextColor(235, 10, 30);
         doc.text(area, 12, y);
         doc.setTextColor(0);
         y += 6;
+
         const qs = a.answers.filter(ans => ans.area === area);
+        const areaScore = Math.round(qs.filter(ans => ans.response === "sim").length / qs.length * 100);
+
         qs.forEach(ans => {
-          if (y > 270) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+          if (y > 260) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
           doc.setFontSize(7.5);
           doc.setFont(undefined, "bold");
-          doc.text(`${ans.id} ${ans.text.substring(0, 95)}`, 12, y);
+          doc.text(`${ans.id} ${ans.text.substring(0, 90)}`, 12, y);
           doc.setFont(undefined, "normal");
           const resp = ans.response === "sim" ? "Conforme" : ans.response === "nao" ? "Não Conforme" : ans.response === "na" ? "N/A" : "—";
-          doc.text(resp, 160, y);
+          doc.text(resp, 155, y);
           y += 4;
           if (ans.notes) {
             doc.text(`Obs: ${ans.notes.substring(0, 100)}`, 12, y);
@@ -694,26 +755,38 @@
           }
           y += 2;
         });
-        y += 4;
-      });
 
-      if (a.comentariosGerais) {
-        if (y > 250) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
-        doc.setFontSize(10);
-        doc.setFont(undefined, "bold");
-        doc.text("Comentários Gerais", 12, y);
+        // Spider da área
+        const img = await generateSpiderImage([area], [areaScore]);
+        if (y > 200) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+        doc.addImage(img, "PNG", 60, y, 90, 60);
+        y += 68;
         y += 6;
-        doc.setFont(undefined, "normal");
-        doc.setFontSize(8);
-        const lines = doc.splitTextToSize(a.comentariosGerais, 180);
-        doc.text(lines, 12, y);
       }
 
-      doc.setFontSize(11);
+      // Resultado global
+      if (y > 220) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+      doc.setFontSize(12);
       doc.setFont(undefined, "bold");
       doc.setTextColor(235, 10, 30);
-      if (y > 260) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
-      doc.text(`Resultado Global: ${score}%`, 12, y + 12);
+      doc.text(`Resultado Global: ${score}%`, 12, y + 10);
+
+      const globalImg = await generateSpiderImage(areas, areaScores);
+      doc.addImage(globalImg, "PNG", 50, y + 16, 110, 75);
+
+      if (a.comentariosGerais) {
+        doc.addPage();
+        page++;
+        addHeaderFooter(doc, page);
+        doc.setTextColor(0);
+        doc.setFontSize(11);
+        doc.setFont(undefined, "bold");
+        doc.text("Comentários Gerais", 12, 24);
+        doc.setFont(undefined, "normal");
+        doc.setFontSize(9);
+        const lines = doc.splitTextToSize(a.comentariosGerais, 180);
+        doc.text(lines, 12, 34);
+      }
 
       doc.save(`Relatorio_Toyota_${(w ? w.name : "Oficina").replace(/\s+/g, "_")}.pdf`);
     };
@@ -727,6 +800,7 @@
       const preData = [
         ["RELATÓRIO DE AVALIAÇÃO"],
         ["Oficina", w ? w.name : a.workshopId],
+        ["Código", w ? w.code || "" : ""],
         ["Data", new Date(a.date).toLocaleDateString("pt-PT")],
         ["Gestor de Área", k.gestorArea || ""],
         ["Responsável Pós-Venda", k.respPosVenda || ""],
@@ -737,6 +811,9 @@
         ["CPUs / Mês", k.cpusMes, k.objCpus],
         ["Taxa de Recomendação", k.recomendacao, k.objRecomendacao],
         ["Fix-It-Right", k.fir, k.objFir],
+        ["Qualidade de Marcação", k.qualMarcacao, k.objQualMarcacao],
+        ["Eficiência Oficinal", k.eficOficinal, k.objEficOficinal],
+        ["Capacidade Real vs Plano", k.capReal, k.objCapReal],
         [],
         ["Técnicos N1", k.tec1], ["N2", k.tec2], ["N3", k.tec3], ["N4", k.tec4], ["PMT", k.pmt],
         ["Assessores N1", k.ast1], ["N2", k.ast2], ["Nível 100", k.ast100],
@@ -779,12 +856,14 @@
 
     async function addWorkshop() {
       const name = document.getElementById("new-w-name").value.trim();
+      const code = document.getElementById("new-w-code").value.trim();
       const address = document.getElementById("new-w-address").value.trim();
       if (!name) return;
       try {
-        await addDoc(collection(db, "workshops"), { name, address });
+        await addDoc(collection(db, "workshops"), { name, code, address });
         document.getElementById("w-msg").textContent = "Oficina criada!";
         document.getElementById("new-w-name").value = "";
+        document.getElementById("new-w-code").value = "";
         document.getElementById("new-w-address").value = "";
         document.getElementById("add-workshop-form").style.display = "none";
         await loadWorkshops();
