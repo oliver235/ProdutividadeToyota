@@ -522,7 +522,7 @@
 
     function getSubAreaScores(answers, area) {
       const subs = {};
-      answers.filter(a => a.area === area).forEach(a => {
+      answers.filter(a => a.area === area && a.subArea).forEach(a => {
         if (!subs[a.subArea]) subs[a.subArea] = [];
         subs[a.subArea].push(a);
       });
@@ -586,7 +586,7 @@
           let lastSub = "";
           let html = `<div class="area-title">${area}</div>`;
           qs.forEach(ans => {
-            if (ans.subArea !== lastSub) {
+            if (ans.subArea && ans.subArea !== lastSub) {
               html += `<div class="subarea-title">${ans.subArea}</div>`;
               lastSub = ans.subArea;
             }
@@ -646,196 +646,209 @@
 
     async function generateSpiderImage(labels, data) {
       return new Promise(resolve => {
-        const canvas = document.createElement("canvas");
-        canvas.width = 450;
-        canvas.height = 340;
-        const ctx = canvas.getContext("2d");
-        new Chart(ctx, {
-          type: "radar",
-          data: {
-            labels,
-            datasets: [{
-              label: "Pontuação %",
-              data,
-              backgroundColor: "rgba(235, 10, 30, 0.2)",
-              borderColor: "#EB0A1E",
-              pointBackgroundColor: "#EB0A1E",
-              borderWidth: 2
-            }]
-          },
-          options: {
-            responsive: false,
-            animation: false,
-            scales: { r: { beginAtZero: true, max: 100, ticks: { stepSize: 20 } } },
-            plugins: { legend: { display: false } }
-          }
-        });
-        setTimeout(() => resolve(canvas.toDataURL("image/png")), 400);
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = 450;
+          canvas.height = 340;
+          const ctx = canvas.getContext("2d");
+          new Chart(ctx, {
+            type: "radar",
+            data: {
+              labels,
+              datasets: [{
+                label: "Pontuação %",
+                data,
+                backgroundColor: "rgba(235, 10, 30, 0.2)",
+                borderColor: "#EB0A1E",
+                pointBackgroundColor: "#EB0A1E",
+                borderWidth: 2
+              }]
+            },
+            options: {
+              responsive: false,
+              animation: false,
+              scales: { r: { beginAtZero: true, max: 100, ticks: { stepSize: 20 } } },
+              plugins: { legend: { display: false } }
+            }
+          });
+          setTimeout(() => resolve(canvas.toDataURL("image/png")), 500);
+        } catch (e) {
+          resolve(null);
+        }
       });
     }
 
     window.exportPDF = async (id) => {
-      const a = allAudits.find(x => x.id === id);
-      if (!a) return;
-      const w = workshops.find(x => x.id === a.workshopId);
-      const k = a.kpis || {};
-      const score = calcScore(a.answers);
-      const areas = [...new Set(a.answers.map(ans => ans.area))];
-      const areaScores = areas.map(area => calcScore(a.answers.filter(ans => ans.area === area)));
+      try {
+        const a = allAudits.find(x => x.id === id);
+        if (!a) return alert("Auditoria não encontrada");
+        const w = workshops.find(x => x.id === a.workshopId);
+        const k = a.kpis || {};
+        const score = calcScore(a.answers);
+        const areas = [...new Set(a.answers.map(ans => ans.area))];
+        const areaScores = areas.map(area => calcScore(a.answers.filter(ans => ans.area === area)));
 
-      const doc = new jsPDF();
-      const pageWidth = 210;
-      const pageHeight = 297;
-      let page = 1;
+        const doc = new jsPDF();
+        const pageWidth = 210;
+        const pageHeight = 297;
+        let page = 1;
 
-      function addHeaderFooter(doc, pageNum) {
-        doc.setFillColor(235, 10, 30);
-        doc.rect(0, 0, pageWidth, 16, "F");
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(12);
+        function addHeaderFooter(doc, pageNum) {
+          doc.setFillColor(235, 10, 30);
+          doc.rect(0, 0, pageWidth, 16, "F");
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(12);
+          doc.setFont(undefined, "bold");
+          doc.text("TOYOTA", 12, 11);
+          doc.setFontSize(8);
+          doc.setFont(undefined, "normal");
+          doc.text("Programa de Produtividade", 45, 11);
+          doc.setFillColor(245, 245, 245);
+          doc.rect(0, pageHeight - 10, pageWidth, 10, "F");
+          doc.setTextColor(80, 80, 80);
+          doc.setFontSize(7);
+          doc.text(`Toyota Caetano Portugal | ${new Date().toLocaleDateString("pt-PT")}`, 12, pageHeight - 4);
+          doc.text(`Página ${pageNum}`, pageWidth - 25, pageHeight - 4);
+        }
+
+        // Página 1
+        addHeaderFooter(doc, page);
+        doc.setTextColor(0);
+        doc.setFontSize(11);
         doc.setFont(undefined, "bold");
-        doc.text("TOYOTA", 12, 11);
-        doc.setFontSize(8);
-        doc.setFont(undefined, "normal");
-        doc.text("Programa de Produtividade", 45, 11);
-        doc.setFillColor(245, 245, 245);
-        doc.rect(0, pageHeight - 10, pageWidth, 10, "F");
-        doc.setTextColor(80, 80, 80);
-        doc.setFontSize(7);
-        doc.text(`Toyota Caetano Portugal | ${new Date().toLocaleDateString("pt-PT")}`, 12, pageHeight - 4);
-        doc.text(`Página ${pageNum}`, pageWidth - 25, pageHeight - 4);
-      }
-
-      // Página 1
-      addHeaderFooter(doc, page);
-      doc.setTextColor(0);
-      doc.setFontSize(11);
-      doc.setFont(undefined, "bold");
-      doc.text("RELATÓRIO DE AVALIAÇÃO", 12, 24);
-      doc.setFontSize(9);
-      doc.setFont(undefined, "normal");
-      doc.text(`Oficina: ${w ? w.name : a.workshopId} ${w && w.code ? `(${w.code})` : ""}`, 12, 32);
-      doc.text(`Data da Visita: ${new Date(a.date).toLocaleDateString("pt-PT")}`, 12, 37);
-      doc.text(`Gestor de Área: ${k.gestorArea || "—"}`, 12, 42);
-      doc.text(`Responsável Pós-Venda: ${k.respPosVenda || "—"}`, 12, 47);
-
-      doc.setFontSize(10);
-      doc.setFont(undefined, "bold");
-      doc.text("Dados de Pré-Auditoria", 12, 56);
-      doc.setFont(undefined, "normal");
-      doc.setFontSize(8);
-      const kpiRows = [
-        ["Horas / Técnico / Dia", (k.horasTec||"-")+"%", (k.objHorasTec||"-")+"%"],
-        ["Horas / m²", (k.horasM2||"-")+"%", (k.objHorasM2||"-")+"%"],
-        ["CPUs / Mês", k.cpusMes||"-", k.objCpus||"-"],
-        ["Taxa de Recomendação", (k.recomendacao||"-")+"%", (k.objRecomendacao||"-")+"%"],
-        ["Fix-It-Right", (k.fir||"-")+"%", (k.objFir||"-")+"%"],
-        ["Qualidade de Marcação", (k.qualMarcacao||"-")+"%", (k.objQualMarcacao||"-")+"%"],
-        ["Eficiência Oficinal", (k.eficOficinal||"-")+"%", (k.objEficOficinal||"-")+"%"],
-        ["Capacidade Real vs Plano", (k.capReal||"-")+"%", (k.objCapReal||"-")+"%"]
-      ];
-      kpiRows.forEach((r, i) => {
-        doc.text(r[0], 12, 64 + i*5);
-        doc.text(String(r[1]), 95, 64 + i*5);
-        doc.text(String(r[2]), 140, 64 + i*5);
-      });
-
-      doc.setFontSize(9);
-      doc.text(`Técnicos: N1 ${k.tec1||0} | N2 ${k.tec2||0} | N3 ${k.tec3||0} | N4 ${k.tec4||0} | PMT ${k.pmt||0}`, 12, 110);
-      doc.text(`Assessores: N1 ${k.ast1||0} | N2 ${k.ast2||0} | Nível 100 ${k.ast100||0}`, 12, 116);
-
-      if (k.comentariosPre) {
+        doc.text("RELATÓRIO DE AVALIAÇÃO", 12, 24);
         doc.setFontSize(9);
-        doc.setFont(undefined, "bold");
-        doc.text("Diagnóstico Inicial - Resumo", 12, 128);
         doc.setFont(undefined, "normal");
-        doc.setFontSize(8);
-        const lines = doc.splitTextToSize(k.comentariosPre, 180);
-        doc.text(lines, 12, 135);
-      }
+        doc.text(`Oficina: ${w ? w.name : a.workshopId} ${w && w.code ? `(${w.code})` : ""}`, 12, 32);
+        doc.text(`Data da Visita: ${new Date(a.date).toLocaleDateString("pt-PT")}`, 12, 37);
+        doc.text(`Gestor de Área: ${k.gestorArea || "—"}`, 12, 42);
+        doc.text(`Responsável Pós-Venda: ${k.respPosVenda || "—"}`, 12, 47);
 
-      // Página 2 - Grelha com spider por área (sub-áreas)
-      doc.addPage();
-      page++;
-      addHeaderFooter(doc, page);
-      doc.setTextColor(0);
-      doc.setFontSize(11);
-      doc.setFont(undefined, "bold");
-      doc.text("Grelha de Avaliação", 12, 24);
-
-      let y = 32;
-      for (const area of areas) {
-        if (y > 200) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
         doc.setFontSize(10);
         doc.setFont(undefined, "bold");
-        doc.setTextColor(235, 10, 30);
-        doc.text(area, 12, y);
-        doc.setTextColor(0);
-        y += 6;
-
-        const qs = a.answers.filter(ans => ans.area === area);
-        let lastSub = "";
-        qs.forEach(ans => {
-          if (y > 260) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
-          if (ans.subArea !== lastSub) {
-            doc.setFontSize(8.5);
-            doc.setFont(undefined, "bold");
-            doc.setTextColor(80, 80, 80);
-            doc.text(ans.subArea, 12, y);
-            doc.setTextColor(0);
-            y += 5;
-            lastSub = ans.subArea;
-          }
-          doc.setFontSize(7.5);
-          doc.setFont(undefined, "bold");
-          doc.text(`${ans.id} ${ans.text.substring(0, 85)}`, 12, y);
-          doc.setFont(undefined, "normal");
-          const resp = ans.response === "sim" ? "Conforme" : ans.response === "nao" ? "Não Conforme" : ans.response === "na" ? "N/A" : "—";
-          doc.text(resp, 155, y);
-          y += 4;
-          if (ans.notes) {
-            doc.text(`Obs: ${ans.notes.substring(0, 100)}`, 12, y);
-            y += 4;
-          }
-          y += 2;
+        doc.text("Dados de Pré-Auditoria", 12, 56);
+        doc.setFont(undefined, "normal");
+        doc.setFontSize(8);
+        const kpiRows = [
+          ["Horas / Técnico / Dia", (k.horasTec||"-")+"%", (k.objHorasTec||"-")+"%"],
+          ["Horas / m²", (k.horasM2||"-")+"%", (k.objHorasM2||"-")+"%"],
+          ["CPUs / Mês", k.cpusMes||"-", k.objCpus||"-"],
+          ["Taxa de Recomendação", (k.recomendacao||"-")+"%", (k.objRecomendacao||"-")+"%"],
+          ["Fix-It-Right", (k.fir||"-")+"%", (k.objFir||"-")+"%"],
+          ["Qualidade de Marcação", (k.qualMarcacao||"-")+"%", (k.objQualMarcacao||"-")+"%"],
+          ["Eficiência Oficinal", (k.eficOficinal||"-")+"%", (k.objEficOficinal||"-")+"%"],
+          ["Capacidade Real vs Plano", (k.capReal||"-")+"%", (k.objCapReal||"-")+"%"]
+        ];
+        kpiRows.forEach((r, i) => {
+          doc.text(r[0], 12, 64 + i*5);
+          doc.text(String(r[1]), 95, 64 + i*5);
+          doc.text(String(r[2]), 140, 64 + i*5);
         });
 
-        // Spider da área (sub-áreas)
-        const subScores = getSubAreaScores(a.answers, area);
-        if (subScores.length > 1) {
-          const img = await generateSpiderImage(subScores.map(s => s.name), subScores.map(s => s.score));
-          if (y > 190) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
-          doc.addImage(img, "PNG", 50, y, 110, 75);
-          y += 82;
+        doc.setFontSize(9);
+        doc.text(`Técnicos: N1 ${k.tec1||0} | N2 ${k.tec2||0} | N3 ${k.tec3||0} | N4 ${k.tec4||0} | PMT ${k.pmt||0}`, 12, 110);
+        doc.text(`Assessores: N1 ${k.ast1||0} | N2 ${k.ast2||0} | Nível 100 ${k.ast100||0}`, 12, 116);
+
+        if (k.comentariosPre) {
+          doc.setFontSize(9);
+          doc.setFont(undefined, "bold");
+          doc.text("Diagnóstico Inicial - Resumo", 12, 128);
+          doc.setFont(undefined, "normal");
+          doc.setFontSize(8);
+          const lines = doc.splitTextToSize(k.comentariosPre, 180);
+          doc.text(lines, 12, 135);
         }
-        y += 8;
-      }
 
-      // Resultado global + spider das áreas principais
-      if (y > 200) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
-      doc.setFontSize(12);
-      doc.setFont(undefined, "bold");
-      doc.setTextColor(235, 10, 30);
-      doc.text(`Resultado Global: ${score}%`, 12, y + 10);
-
-      const globalImg = await generateSpiderImage(areas, areaScores);
-      doc.addImage(globalImg, "PNG", 50, y + 16, 110, 75);
-
-      if (a.comentariosGerais) {
+        // Página 2 - Grelha
         doc.addPage();
         page++;
         addHeaderFooter(doc, page);
         doc.setTextColor(0);
         doc.setFontSize(11);
         doc.setFont(undefined, "bold");
-        doc.text("Comentários Gerais", 12, 24);
-        doc.setFont(undefined, "normal");
-        doc.setFontSize(9);
-        const lines = doc.splitTextToSize(a.comentariosGerais, 180);
-        doc.text(lines, 12, 34);
-      }
+        doc.text("Grelha de Avaliação", 12, 24);
 
-      doc.save(`Relatorio_Toyota_${(w ? w.name : "Oficina").replace(/\s+/g, "_")}.pdf`);
+        let y = 32;
+        for (const area of areas) {
+          if (y > 200) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+          doc.setFontSize(10);
+          doc.setFont(undefined, "bold");
+          doc.setTextColor(235, 10, 30);
+          doc.text(area, 12, y);
+          doc.setTextColor(0);
+          y += 6;
+
+          const qs = a.answers.filter(ans => ans.area === area);
+          let lastSub = "";
+          qs.forEach(ans => {
+            if (y > 260) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+            if (ans.subArea && ans.subArea !== lastSub) {
+              doc.setFontSize(8.5);
+              doc.setFont(undefined, "bold");
+              doc.setTextColor(80, 80, 80);
+              doc.text(ans.subArea, 12, y);
+              doc.setTextColor(0);
+              y += 5;
+              lastSub = ans.subArea;
+            }
+            doc.setFontSize(7.5);
+            doc.setFont(undefined, "bold");
+            doc.text(`${ans.id} ${ans.text.substring(0, 85)}`, 12, y);
+            doc.setFont(undefined, "normal");
+            const resp = ans.response === "sim" ? "Conforme" : ans.response === "nao" ? "Não Conforme" : ans.response === "na" ? "N/A" : "—";
+            doc.text(resp, 155, y);
+            y += 4;
+            if (ans.notes) {
+              doc.text(`Obs: ${ans.notes.substring(0, 100)}`, 12, y);
+              y += 4;
+            }
+            y += 2;
+          });
+
+          // Spider da área (sub-áreas) se existirem
+          const subScores = getSubAreaScores(a.answers, area);
+          if (subScores.length > 1) {
+            const img = await generateSpiderImage(subScores.map(s => s.name), subScores.map(s => s.score));
+            if (img && y > 190) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+            if (img) {
+              doc.addImage(img, "PNG", 50, y, 110, 75);
+              y += 82;
+            }
+          }
+          y += 8;
+        }
+
+        // Resultado global
+        if (y > 200) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+        doc.setFontSize(12);
+        doc.setFont(undefined, "bold");
+        doc.setTextColor(235, 10, 30);
+        doc.text(`Resultado Global: ${score}%`, 12, y + 10);
+
+        const globalImg = await generateSpiderImage(areas, areaScores);
+        if (globalImg) {
+          doc.addImage(globalImg, "PNG", 50, y + 16, 110, 75);
+        }
+
+        if (a.comentariosGerais) {
+          doc.addPage();
+          page++;
+          addHeaderFooter(doc, page);
+          doc.setTextColor(0);
+          doc.setFontSize(11);
+          doc.setFont(undefined, "bold");
+          doc.text("Comentários Gerais", 12, 24);
+          doc.setFont(undefined, "normal");
+          doc.setFontSize(9);
+          const lines = doc.splitTextToSize(a.comentariosGerais, 180);
+          doc.text(lines, 12, 34);
+        }
+
+        doc.save(`Relatorio_Toyota_${(w ? w.name : "Oficina").replace(/\s+/g, "_")}.pdf`);
+      } catch (err) {
+        alert("Erro ao gerar PDF: " + err.message);
+        console.error(err);
+      }
     };
 
     window.exportExcel = (id) => {
