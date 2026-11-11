@@ -44,6 +44,7 @@
     .small { font-size: 12px; color: #6c757d; }
     .logout, .admin-btn { background: transparent; border: 1px solid white; color: white; padding: 6px 12px; border-radius: 6px; }
     .area-title { background: #EB0A1E; color: white; padding: 8px 12px; border-radius: 8px; margin: 16px 0 8px; font-weight: 600; }
+    .subarea-title { background: #f1f3f5; color: #343a40; padding: 6px 12px; border-radius: 6px; margin: 12px 0 6px; font-weight: 600; font-size: 14px; }
     .photo-preview { max-width: 100%; max-height: 140px; margin-top: 8px; border-radius: 8px; }
     .chart-container { background: white; border-radius: 12px; padding: 16px; margin: 12px 0; }
     .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
@@ -117,47 +118,47 @@
     let workshops = [];
     let usersList = [];
     const questions = [
-      { area: "Agendamento", id: "1.1", text: "A oficina tem a capacidade de marcar um serviço no prazo máximo de 3 dias úteis?" },
-      { area: "Agendamento", id: "1.2", text: "O Lead Time de marcação transmitido na chamada de cliente mistério está de acordo com a informação disponível no Quadro de Marcações?" },
-      { area: "Agendamento", id: "1.3", text: "A atribuição dos trabalhos agendados é efetuada em conformidade com a matriz de competências e a certificação técnica de cada colaborador?" },
-      { area: "Agendamento", id: "1.4", text: "Os Assessores de Serviço utilizam os códigos de operação padronizados (OTT) de acordo com o tipo de serviço agendado? Para operações locais, utilizam códigos de operação tabelados (OTI)?" },
-      { area: "Agendamento", id: "1.5", text: "O planeamento da agenda é gerido ativamente para garantir uma taxa de ocupação do quadro de marcações de 110%?" },
-      { area: "Agendamento", id: "1.6", text: "Os trabalhos em curso (reparações de continuidade ou pendentes) encontram-se devidamente identificados e contabilizados na capacidade diária do quadro de marcações?" },
-      { area: "Agendamento", id: "1.7", text: "O cliente consegue estabelecer contacto com a oficina de uma forma rápida e eficaz? Em caso de não atendimento, é feita a devolução de chamada?" },
-      { area: "Agendamento", id: "1.8", text: "Durante o contacto telefónico para agendamento, o interlocutor questiona proactivamente o cliente sobre necessidades adicionais, serviços complementares ou campanhas técnicas?" },
-      { area: "Agendamento", id: "1.9", text: "A disponibilidade de slots de serviço na plataforma de Marcação Online (OSB) encontra-se alinhada e sincronizada com a capacidade real do DMS?" },
-      { area: "Agendamento", id: "1.10", text: "As encomendas de peças necessárias para as intervenções agendadas são realizadas via DMS através do sistema DPMM?" },
-      { area: "Agendamento", id: "1.11", text: "Encontra-se implementado o processo de geração atempada da folha de pré-preparação da visita?" },
-      { area: "Agendamento", id: "1.12", text: "A Oficina (equipa de AST's) faz reuniões de planeamento de trabalho no dia anterior?" },
-      { area: "Agendamento", id: "1.13", text: "Os trabalhos internos (PDS/pré-entrega, montagem de acessórios, check-up de 145 pontos) são agendados e integrados na capacidade da oficina?" },
-      { area: "Processo de Receção", id: "2.1", text: "O horário de funcionamento e acolhimento da Receção está desfasado com o início do turno da Oficina?" },
-      { area: "Processo de Receção", id: "2.2", text: "A dimensão da equipa de AST's está ajustada para permitir o atendimento de todos os clientes à hora marcada?" },
-      { area: "Processo de Receção", id: "2.3", text: "A Oficina atende os clientes estritamente à hora agendada, sem gerar filas de espera?" },
-      { area: "Processo de Receção", id: "2.4", text: "O intervalo de tempo entre as marcações permite realizar o processo de receção de acordo com o preconizado pela marca?" },
-      { area: "Processo de Receção", id: "2.5", text: "Durante o acolhimento (Receção Ativa), o Assessor de Serviço regista na Ordem de Reparação todas as necessidades adicionais identificadas?" },
-      { area: "Processo de Receção", id: "2.6", text: "Nas reparações que exigem pré-diagnóstico, é utilizado o questionário de diagnóstico aprovado pelo NMSC?" },
-      { area: "Processo de Receção", id: "2.7", text: "Existe um fluxo de comunicação estruturado entre a Receção e a Oficina?" },
-      { area: "Processo de Receção", id: "2.8", text: "Encontra-se definido um procedimento de contacto imediato perante faltas de comparência (no-shows)?" },
-      { area: "Processo de Receção", id: "2.9", text: "O Assessor de Serviço define com o cliente a hora de entrega da viatura antes de iniciar o serviço?" },
-      { area: "Processo de Receção", id: "2.10", text: "O Assessor de Serviço indicou ao cliente alguma forma de contacto com a oficina durante a realização do serviço?" },
-      { area: "Gestão Oficinal", id: "3.1", text: "A distribuição das Ordens de Reparação é efetuada considerando a certificação técnica, a complexidade e o tempo disponível?" },
-      { area: "Gestão Oficinal", id: "3.2", text: "Os técnicos realizam o registo eletrónico de tempos (picagens) a 100% para todas as intervenções?" },
-      { area: "Gestão Oficinal", id: "3.3", text: "O Quadro de Gestão Oficinal é mantido atualizado em tempo real?" },
-      { area: "Gestão Oficinal", id: "3.4", text: "Todas as viaturas presentes na oficina têm Ordem de Reparação aberta?" },
-      { area: "Gestão Oficinal", id: "3.5", text: "A gestão das viaturas em espera de serviço é feita regularmente de acordo com a prioridade?" },
-      { area: "Gestão Oficinal", id: "3.6", text: "No caso de não comparecimento de um cliente, a slot reservada é alocada novamente para serviços em buffer?" },
-      { area: "Gestão Oficinal", id: "3.7", text: "As peças e consumíveis são previamente separados e disponibilizados em carrinhos de pré-pulling?" },
-      { area: "Gestão Oficinal", id: "3.8", text: "Os postos de trabalho cumprem os princípios 5S?" },
-      { area: "Gestão Oficinal", id: "3.9", text: "A oficina dispõe de um processo/norma para alocar tempo na gestão da produção para serviços adicionais?" },
-      { area: "Gestão Oficinal", id: "3.10", text: "É realizado e documentado o Controlo de Qualidade pós-reparação (Fix-It-Right)?" },
-      { area: "Gestão Oficinal", id: "3.11", text: "A estação de serviço apresenta acessos desimpedidos e cumpre os critérios 5S?" },
-      { area: "Gestão Oficinal", id: "3.12", text: "Ao nível de recursos humanos e estações de serviço, a oficina está ajustada às necessidades?" },
-      { area: "Gestão Oficinal", id: "3.13", text: "A oficina utiliza um quadro visual para alocação de viaturas e prioridades de entrega?" },
-      { area: "Entrega", id: "4.1", text: "As viaturas são entregues à hora combinada com o cliente?" },
-      { area: "Entrega", id: "4.2", text: "Perante atrasos, o cliente é contactado com antecedência e a alteração é registada no DMS?" },
-      { area: "Entrega", id: "4.3", text: "No momento da entrega, o Assessor de Serviço explica a fatura item por item?" },
-      { area: "Entrega", id: "4.4", text: "No momento da explicação da fatura, o AST garante que todas as questões iniciais do cliente são explicadas?" },
-      { area: "Entrega", id: "4.5", text: "O AST acompanha o cliente até à viatura, retirando as proteções na sua presença?" }
+      { area: "Agendamento", subArea: "Lead Times", id: "1.1", text: "A oficina tem a capacidade de marcar um serviço no prazo máximo de 3 dias úteis?" },
+      { area: "Agendamento", subArea: "Lead Times", id: "1.2", text: "O Lead Time de marcação transmitido na chamada de cliente mistério está de acordo com a informação disponível no Quadro de Marcações?" },
+      { area: "Agendamento", subArea: "Alocação de Recursos", id: "1.3", text: "A atribuição dos trabalhos agendados é efetuada em conformidade com a matriz de competências e a certificação técnica de cada colaborador?" },
+      { area: "Agendamento", subArea: "Códigos de Operação", id: "1.4", text: "Os Assessores de Serviço utilizam os códigos de operação padronizados (OTT) de acordo com o tipo de serviço agendado? Para operações locais, utilizam códigos de operação tabelados (OTI)?" },
+      { area: "Agendamento", subArea: "Ocupação da Agenda", id: "1.5", text: "O planeamento da agenda é gerido ativamente para garantir uma taxa de ocupação do quadro de marcações de 110%?" },
+      { area: "Agendamento", subArea: "Ocupação da Agenda", id: "1.6", text: "Os trabalhos em curso (reparações de continuidade ou pendentes) encontram-se devidamente identificados e contabilizados na capacidade diária do quadro de marcações?" },
+      { area: "Agendamento", subArea: "Marcação Telefónica", id: "1.7", text: "O cliente consegue estabelecer contacto com a oficina de uma forma rápida e eficaz? Em caso de não atendimento, é feita a devolução de chamada?" },
+      { area: "Agendamento", subArea: "Marcação Telefónica", id: "1.8", text: "Durante o contacto telefónico para agendamento, o interlocutor questiona proactivamente o cliente sobre necessidades adicionais, serviços complementares ou campanhas técnicas?" },
+      { area: "Agendamento", subArea: "Marcação Online", id: "1.9", text: "A disponibilidade de slots de serviço na plataforma de Marcação Online (OSB) encontra-se alinhada e sincronizada com a capacidade real do DMS?" },
+      { area: "Agendamento", subArea: "Peças de EPM", id: "1.10", text: "As encomendas de peças necessárias para as intervenções agendadas são realizadas via DMS através do sistema DPMM?" },
+      { area: "Agendamento", subArea: "Pré-preparação", id: "1.11", text: "Encontra-se implementado o processo de geração atempada da folha de pré-preparação da visita?" },
+      { area: "Agendamento", subArea: "Pré-preparação", id: "1.12", text: "A Oficina (equipa de AST's) faz reuniões de planeamento de trabalho no dia anterior?" },
+      { area: "Agendamento", subArea: "Trabalhos Internos", id: "1.13", text: "Os trabalhos internos (PDS/pré-entrega, montagem de acessórios, check-up de 145 pontos) são agendados e integrados na capacidade da oficina?" },
+      { area: "Processo de Receção", subArea: "Horário e Equipa", id: "2.1", text: "O horário de funcionamento e acolhimento da Receção está desfasado com o início do turno da Oficina?" },
+      { area: "Processo de Receção", subArea: "Horário e Equipa", id: "2.2", text: "A dimensão da equipa de AST's está ajustada para permitir o atendimento de todos os clientes à hora marcada?" },
+      { area: "Processo de Receção", subArea: "Atendimento à Hora", id: "2.3", text: "A Oficina atende os clientes estritamente à hora agendada, sem gerar filas de espera?" },
+      { area: "Processo de Receção", subArea: "Atendimento à Hora", id: "2.4", text: "O intervalo de tempo entre as marcações permite realizar o processo de receção de acordo com o preconizado pela marca?" },
+      { area: "Processo de Receção", subArea: "Receção Ativa", id: "2.5", text: "Durante o acolhimento (Receção Ativa), o Assessor de Serviço regista na Ordem de Reparação todas as necessidades adicionais identificadas?" },
+      { area: "Processo de Receção", subArea: "Diagnóstico", id: "2.6", text: "Nas reparações que exigem pré-diagnóstico, é utilizado o questionário de diagnóstico aprovado pelo NMSC?" },
+      { area: "Processo de Receção", subArea: "Comunicação", id: "2.7", text: "Existe um fluxo de comunicação estruturado entre a Receção e a Oficina?" },
+      { area: "Processo de Receção", subArea: "No-Shows", id: "2.8", text: "Encontra-se definido um procedimento de contacto imediato perante faltas de comparência (no-shows)?" },
+      { area: "Processo de Receção", subArea: "Entrega e Contacto", id: "2.9", text: "O Assessor de Serviço define com o cliente a hora de entrega da viatura antes de iniciar o serviço?" },
+      { area: "Processo de Receção", subArea: "Entrega e Contacto", id: "2.10", text: "O Assessor de Serviço indicou ao cliente alguma forma de contacto com a oficina durante a realização do serviço?" },
+      { area: "Gestão Oficinal", subArea: "Distribuição e Tempos", id: "3.1", text: "A distribuição das Ordens de Reparação é efetuada considerando a certificação técnica, a complexidade e o tempo disponível?" },
+      { area: "Gestão Oficinal", subArea: "Distribuição e Tempos", id: "3.2", text: "Os técnicos realizam o registo eletrónico de tempos (picagens) a 100% para todas as intervenções?" },
+      { area: "Gestão Oficinal", subArea: "Quadro e Controlo", id: "3.3", text: "O Quadro de Gestão Oficinal é mantido atualizado em tempo real?" },
+      { area: "Gestão Oficinal", subArea: "Quadro e Controlo", id: "3.4", text: "Todas as viaturas presentes na oficina têm Ordem de Reparação aberta?" },
+      { area: "Gestão Oficinal", subArea: "Gestão de Espera", id: "3.5", text: "A gestão das viaturas em espera de serviço é feita regularmente de acordo com a prioridade?" },
+      { area: "Gestão Oficinal", subArea: "Gestão de Espera", id: "3.6", text: "No caso de não comparecimento de um cliente, a slot reservada é alocada novamente para serviços em buffer?" },
+      { area: "Gestão Oficinal", subArea: "Peças e 5S", id: "3.7", text: "As peças e consumíveis são previamente separados e disponibilizados em carrinhos de pré-pulling?" },
+      { area: "Gestão Oficinal", subArea: "Peças e 5S", id: "3.8", text: "Os postos de trabalho cumprem os princípios 5S?" },
+      { area: "Gestão Oficinal", subArea: "Serviços Adicionais", id: "3.9", text: "A oficina dispõe de um processo/norma para alocar tempo na gestão da produção para serviços adicionais?" },
+      { area: "Gestão Oficinal", subArea: "Qualidade", id: "3.10", text: "É realizado e documentado o Controlo de Qualidade pós-reparação (Fix-It-Right)?" },
+      { area: "Gestão Oficinal", subArea: "Recursos", id: "3.11", text: "A estação de serviço apresenta acessos desimpedidos e cumpre os critérios 5S?" },
+      { area: "Gestão Oficinal", subArea: "Recursos", id: "3.12", text: "Ao nível de recursos humanos e estações de serviço, a oficina está ajustada às necessidades?" },
+      { area: "Gestão Oficinal", subArea: "Quadro Visual", id: "3.13", text: "A oficina utiliza um quadro visual para alocação de viaturas e prioridades de entrega?" },
+      { area: "Entrega", subArea: "Pontualidade", id: "4.1", text: "As viaturas são entregues à hora combinada com o cliente?" },
+      { area: "Entrega", subArea: "Pontualidade", id: "4.2", text: "Perante atrasos, o cliente é contactado com antecedência e a alteração é registada no DMS?" },
+      { area: "Entrega", subArea: "Explicação da Fatura", id: "4.3", text: "No momento da entrega, o Assessor de Serviço explica a fatura item por item?" },
+      { area: "Entrega", subArea: "Explicação da Fatura", id: "4.4", text: "No momento da explicação da fatura, o AST garante que todas as questões iniciais do cliente são explicadas?" },
+      { area: "Entrega", subArea: "Acompanhamento", id: "4.5", text: "O AST acompanha o cliente até à viatura, retirando as proteções na sua presença?" }
     ];
 
     let currentUser = null;
@@ -355,10 +356,16 @@
         const w = workshops.find(x => x.id === currentWorkshopId);
         let html = `<div class="card"><strong>${w ? w.name : ""} ${w && w.code ? `(${w.code})` : ""}</strong></div>`;
         let lastArea = "";
+        let lastSub = "";
         currentAudit.answers.forEach((a, i) => {
           if (a.area !== lastArea) {
             html += `<div class="area-title">${a.area}</div>`;
             lastArea = a.area;
+            lastSub = "";
+          }
+          if (a.subArea && a.subArea !== lastSub) {
+            html += `<div class="subarea-title">${a.subArea}</div>`;
+            lastSub = a.subArea;
           }
           html += `<div class="card">
             <strong>${a.id} ${a.text}</strong>
@@ -498,16 +505,30 @@
       showView("relatorios");
     }
 
+    function calcScore(answers) {
+      if (!answers || !answers.length) return 0;
+      return Math.round(answers.filter(a => a.response === "sim").length / answers.length * 100);
+    }
+
+    function getSubAreaScores(answers, area) {
+      const subs = {};
+      answers.filter(a => a.area === area).forEach(a => {
+        if (!subs[a.subArea]) subs[a.subArea] = [];
+        subs[a.subArea].push(a);
+      });
+      return Object.keys(subs).map(s => ({
+        name: s,
+        score: calcScore(subs[s])
+      }));
+    }
+
     window.viewReport = (id) => {
       const a = allAudits.find(x => x.id === id);
       if (!a) return;
       const w = workshops.find(x => x.id === a.workshopId);
-      const score = Math.round(a.answers.filter(ans => ans.response === "sim").length / a.answers.length * 100);
+      const score = calcScore(a.answers);
       const areas = [...new Set(a.answers.map(ans => ans.area))];
-      const areaScores = areas.map(area => {
-        const qs = a.answers.filter(ans => ans.area === area);
-        return Math.round(qs.filter(ans => ans.response === "sim").length / qs.length * 100);
-      });
+      const areaScores = areas.map(area => calcScore(a.answers.filter(ans => ans.area === area)));
       const k = a.kpis || {};
       const canDelete = currentUser && a.userEmail === currentUser.email;
 
@@ -552,13 +573,21 @@
         <h4 style="margin:16px 0 8px;">Grelha de Avaliação</h4>
         ${areas.map(area => {
           const qs = a.answers.filter(ans => ans.area === area);
-          return `<div class="area-title">${area}</div>` + qs.map(ans => `
-            <div class="card ${ans.response==='sim'?'color-sim':ans.response==='nao'?'color-nao':'color-na'}">
+          let lastSub = "";
+          let html = `<div class="area-title">${area}</div>`;
+          qs.forEach(ans => {
+            if (ans.subArea !== lastSub) {
+              html += `<div class="subarea-title">${ans.subArea}</div>`;
+              lastSub = ans.subArea;
+            }
+            html += `<div class="card ${ans.response==='sim'?'color-sim':ans.response==='nao'?'color-nao':'color-na'}">
               <strong>${ans.id} ${ans.text}</strong><br>
               <span class="status ${ans.response==='sim'?'completo':ans.response==='nao'?'emcurso':'pendente'}">${ans.response || '—'}</span>
               ${ans.notes ? `<p class="small" style="margin-top:6px;">${ans.notes}</p>` : ""}
               ${ans.photo ? `<img src="${ans.photo}" class="photo-preview">` : ""}
-            </div>`).join("");
+            </div>`;
+          });
+          return html;
         }).join("")}
 
         ${a.comentariosGerais ? `<div class="card"><strong>Comentários Gerais:</strong><p>${a.comentariosGerais}</p></div>` : ""}
@@ -608,8 +637,8 @@
     async function generateSpiderImage(labels, data) {
       return new Promise(resolve => {
         const canvas = document.createElement("canvas");
-        canvas.width = 400;
-        canvas.height = 300;
+        canvas.width = 450;
+        canvas.height = 340;
         const ctx = canvas.getContext("2d");
         new Chart(ctx, {
           type: "radar",
@@ -631,7 +660,7 @@
             plugins: { legend: { display: false } }
           }
         });
-        setTimeout(() => resolve(canvas.toDataURL("image/png")), 300);
+        setTimeout(() => resolve(canvas.toDataURL("image/png")), 400);
       });
     }
 
@@ -640,12 +669,9 @@
       if (!a) return;
       const w = workshops.find(x => x.id === a.workshopId);
       const k = a.kpis || {};
-      const score = Math.round(a.answers.filter(ans => ans.response === "sim").length / a.answers.length * 100);
+      const score = calcScore(a.answers);
       const areas = [...new Set(a.answers.map(ans => ans.area))];
-      const areaScores = areas.map(area => {
-        const qs = a.answers.filter(ans => ans.area === area);
-        return Math.round(qs.filter(ans => ans.response === "sim").length / qs.length * 100);
-      });
+      const areaScores = areas.map(area => calcScore(a.answers.filter(ans => ans.area === area)));
 
       const doc = new jsPDF();
       const pageWidth = 210;
@@ -718,7 +744,7 @@
         doc.text(lines, 12, 135);
       }
 
-      // Página 2 - Grelha com spider por área
+      // Página 2 - Grelha com spider por área (sub-áreas)
       doc.addPage();
       page++;
       addHeaderFooter(doc, page);
@@ -729,7 +755,7 @@
 
       let y = 32;
       for (const area of areas) {
-        if (y > 220) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+        if (y > 200) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
         doc.setFontSize(10);
         doc.setFont(undefined, "bold");
         doc.setTextColor(235, 10, 30);
@@ -738,13 +764,21 @@
         y += 6;
 
         const qs = a.answers.filter(ans => ans.area === area);
-        const areaScore = Math.round(qs.filter(ans => ans.response === "sim").length / qs.length * 100);
-
+        let lastSub = "";
         qs.forEach(ans => {
           if (y > 260) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+          if (ans.subArea !== lastSub) {
+            doc.setFontSize(8.5);
+            doc.setFont(undefined, "bold");
+            doc.setTextColor(80, 80, 80);
+            doc.text(ans.subArea, 12, y);
+            doc.setTextColor(0);
+            y += 5;
+            lastSub = ans.subArea;
+          }
           doc.setFontSize(7.5);
           doc.setFont(undefined, "bold");
-          doc.text(`${ans.id} ${ans.text.substring(0, 90)}`, 12, y);
+          doc.text(`${ans.id} ${ans.text.substring(0, 85)}`, 12, y);
           doc.setFont(undefined, "normal");
           const resp = ans.response === "sim" ? "Conforme" : ans.response === "nao" ? "Não Conforme" : ans.response === "na" ? "N/A" : "—";
           doc.text(resp, 155, y);
@@ -756,16 +790,19 @@
           y += 2;
         });
 
-        // Spider da área
-        const img = await generateSpiderImage([area], [areaScore]);
-        if (y > 200) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
-        doc.addImage(img, "PNG", 60, y, 90, 60);
-        y += 68;
-        y += 6;
+        // Spider da área (sub-áreas)
+        const subScores = getSubAreaScores(a.answers, area);
+        if (subScores.length > 1) {
+          const img = await generateSpiderImage(subScores.map(s => s.name), subScores.map(s => s.score));
+          if (y > 190) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+          doc.addImage(img, "PNG", 50, y, 110, 75);
+          y += 82;
+        }
+        y += 8;
       }
 
-      // Resultado global
-      if (y > 220) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+      // Resultado global + spider das áreas principais
+      if (y > 200) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
       doc.setFontSize(12);
       doc.setFont(undefined, "bold");
       doc.setTextColor(235, 10, 30);
@@ -806,100 +843,4 @@
         ["Responsável Pós-Venda", k.respPosVenda || ""],
         [],
         ["Indicador", "Valor Atual", "Objetivo"],
-        ["Horas / Técnico / Dia", k.horasTec, k.objHorasTec],
-        ["Horas / m²", k.horasM2, k.objHorasM2],
-        ["CPUs / Mês", k.cpusMes, k.objCpus],
-        ["Taxa de Recomendação", k.recomendacao, k.objRecomendacao],
-        ["Fix-It-Right", k.fir, k.objFir],
-        ["Qualidade de Marcação", k.qualMarcacao, k.objQualMarcacao],
-        ["Eficiência Oficinal", k.eficOficinal, k.objEficOficinal],
-        ["Capacidade Real vs Plano", k.capReal, k.objCapReal],
-        [],
-        ["Técnicos N1", k.tec1], ["N2", k.tec2], ["N3", k.tec3], ["N4", k.tec4], ["PMT", k.pmt],
-        ["Assessores N1", k.ast1], ["N2", k.ast2], ["Nível 100", k.ast100],
-        [],
-        ["Diagnóstico Inicial", k.comentariosPre || ""]
-      ];
-      const ws1 = XLSX.utils.aoa_to_sheet(preData);
-      XLSX.utils.book_append_sheet(wb, ws1, "Pré-Auditoria");
-
-      const grelha = a.answers.map(ans => ({
-        Área: ans.area,
-        Questão: ans.id,
-        Descrição: ans.text,
-        Resposta: ans.response || "",
-        Observações: ans.notes || ""
-      }));
-      const ws2 = XLSX.utils.json_to_sheet(grelha);
-      XLSX.utils.book_append_sheet(wb, ws2, "Grelha");
-
-      if (a.comentariosGerais) {
-        const ws3 = XLSX.utils.aoa_to_sheet([["Comentários Gerais"], [a.comentariosGerais]]);
-        XLSX.utils.book_append_sheet(wb, ws3, "Comentários");
-      }
-
-      XLSX.writeFile(wb, `relatorio_${(w ? w.name : id).replace(/\s+/g,"_")}.xlsx`);
-    };
-
-    async function changePassword() {
-      const newPass = document.getElementById("new-pass").value;
-      if (!newPass || newPass.length < 6) {
-        document.getElementById("pass-msg").textContent = "Password mínima de 6 caracteres";
-        return;
-      }
-      try {
-        await updatePassword(currentUser, newPass);
-        document.getElementById("pass-msg").textContent = "Password alterada com sucesso!";
-        document.getElementById("new-pass").value = "";
-      } catch (e) { document.getElementById("pass-msg").textContent = "Erro: " + e.message; }
-    }
-
-    async function addWorkshop() {
-      const name = document.getElementById("new-w-name").value.trim();
-      const code = document.getElementById("new-w-code").value.trim();
-      const address = document.getElementById("new-w-address").value.trim();
-      if (!name) return;
-      try {
-        await addDoc(collection(db, "workshops"), { name, code, address });
-        document.getElementById("w-msg").textContent = "Oficina criada!";
-        document.getElementById("new-w-name").value = "";
-        document.getElementById("new-w-code").value = "";
-        document.getElementById("new-w-address").value = "";
-        document.getElementById("add-workshop-form").style.display = "none";
-        await loadWorkshops();
-        render();
-      } catch (e) { document.getElementById("w-msg").textContent = "Erro: " + e.message; }
-    }
-
-    async function createUser() {
-      if (!isMaster) return;
-      const email = document.getElementById("new-email").value;
-      const password = document.getElementById("new-password").value;
-      const displayName = document.getElementById("new-displayname").value;
-      if (!email || !password) return;
-      try {
-        await createUserWithEmailAndPassword(secondaryAuth, email, password);
-        await setDoc(doc(db, "users", email), { email, displayName, createdAt: new Date().toISOString(), createdBy: currentUser.email });
-        document.getElementById("admin-msg").textContent = "Conta criada com sucesso!";
-        document.getElementById("new-email").value = "";
-        document.getElementById("new-password").value = "";
-        document.getElementById("new-displayname").value = "";
-        await loadUsers();
-        loadUsersDisplay();
-      } catch (e) { document.getElementById("admin-msg").textContent = "Erro: " + e.message; }
-    }
-
-    function loadUsersDisplay() {
-      const el = document.getElementById("users-list");
-      if (!el) return;
-      el.innerHTML = usersList.length
-        ? usersList.map(u => `<div class="small">${u.email} ${u.displayName ? " — " + u.displayName : ""}</div>`).join("")
-        : "Nenhuma conta criada ainda.";
-    }
-
-    document.querySelectorAll(".nav-btn").forEach(btn => {
-      btn.addEventListener("click", () => showView(btn.dataset.view));
-    });
-  </script>
-</body>
-</html>
+        ["Horas /
