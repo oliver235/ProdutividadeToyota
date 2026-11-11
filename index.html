@@ -10,12 +10,8 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8f9fa; color: #212529; }
-    #login-screen {
-      min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #EB0A1E; padding: 20px;
-    }
-    .login-box {
-      background: white; border-radius: 16px; padding: 32px 24px; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); text-align: center;
-    }
+    #login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #EB0A1E; padding: 20px; }
+    .login-box { background: white; border-radius: 16px; padding: 32px 24px; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); text-align: center; }
     .login-box h1 { color: #EB0A1E; font-size: 28px; font-weight: 800; margin-bottom: 4px; letter-spacing: 1px; }
     .login-box .subtitle { color: #666; font-size: 14px; margin-bottom: 28px; }
     .login-box input { width: 100%; padding: 14px 16px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; }
@@ -36,12 +32,12 @@
     .btn-danger { background: #dc3545; }
     .form-group { margin-bottom: 12px; }
     .form-group label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 14px; }
-    .form-group input { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 15px; }
     .buttons-row { display: flex; gap: 8px; margin: 8px 0; }
     .btn-choice { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid #dee2e6; background: white; font-size: 14px; }
     .btn-choice.active.sim { background: #28a745; color: white; border-color: #28a745; }
     .btn-choice.active.nao { background: #dc3545; color: white; border-color: #dc3545; }
-    .btn-choice.active.na { background: #6c757d; color: white; border-color: #6c757d; }
+    .btn-choice.active.na { background: #ffc107; color: #212529; border-color: #ffc107; }
     .status { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
     .status.completo { background: #d4edda; color: #155724; }
     .status.emcurso { background: #fff3cd; color: #856404; }
@@ -54,13 +50,14 @@
     .score-item { background: #f8f9fa; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #e9ecef; }
     .score-item strong { display: block; font-size: 20px; color: #EB0A1E; }
     .report-header { text-align: center; background: white; padding: 20px 16px; border-radius: 12px; margin-bottom: 12px; border-bottom: 4px solid #EB0A1E; }
-    .kpi-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .kpi-table th, .kpi-table td { border: 1px solid #dee2e6; padding: 8px; text-align: left; }
+    .kpi-table, .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .kpi-table th, .kpi-table td, .compare-table th, .compare-table td { border: 1px solid #dee2e6; padding: 8px; text-align: left; }
     .kpi-table th { background: #EB0A1E; color: white; }
-    .gain-box { background: #d4edda; border: 1px solid #c3e6cb; padding: 16px; text-align: center; border-radius: 8px; font-size: 18px; font-weight: 700; color: #155724; margin: 12px 0; }
-    .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .compare-table th, .compare-table td { border: 1px solid #dee2e6; padding: 8px; text-align: center; }
     .compare-table th { background: #343a40; color: white; }
+    .gain-box { background: #d4edda; border: 1px solid #c3e6cb; padding: 16px; text-align: center; border-radius: 8px; font-size: 18px; font-weight: 700; color: #155724; margin: 12px 0; }
+    .color-sim { background: #d4edda !important; }
+    .color-nao { background: #f8d7da !important; }
+    .color-na { background: #fff3cd !important; }
   </style>
 </head>
 <body>
@@ -115,7 +112,10 @@
     const secondaryApp = initializeApp(firebaseConfig, "secondary");
     const secondaryAuth = getAuth(secondaryApp);
 
+    const DEFAULT_GESTORES = ["José Sousa", "Luís Mota", "Manuela Abreu", "Rui Liberal"];
+
     let workshops = [];
+    let usersList = [];
     const questions = [
       { area: "Agendamento", id: "1.1", text: "A oficina tem a capacidade de marcar um serviço no prazo máximo de 3 dias úteis?" },
       { area: "Agendamento", id: "1.2", text: "O Lead Time de marcação transmitido na chamada de cliente mistério está de acordo com a informação disponível no Quadro de Marcações?" },
@@ -175,6 +175,7 @@
         document.getElementById("app").style.display = "flex";
         document.getElementById("admin-btn").style.display = isMaster ? "inline-block" : "none";
         await loadWorkshops();
+        await loadUsers();
         await loadAudits();
       } else {
         currentUser = null;
@@ -190,23 +191,13 @@
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
       errorEl.textContent = "";
-      errorEl.style.display = "block";
-
-      if (!email || !password) {
-        errorEl.textContent = "Preenche email e password";
-        return;
-      }
-
-      btn.disabled = true;
-      btn.textContent = "A entrar...";
-
+      if (!email || !password) { errorEl.textContent = "Preenche email e password"; return; }
+      btn.disabled = true; btn.textContent = "A entrar...";
       try {
         await signInWithEmailAndPassword(auth, email, password);
       } catch (e) {
-        console.error(e);
         errorEl.textContent = "Erro: " + (e.code || e.message);
-        btn.disabled = false;
-        btn.textContent = "Entrar";
+        btn.disabled = false; btn.textContent = "Entrar";
       }
     });
 
@@ -233,6 +224,13 @@
       } catch (e) { workshops = []; }
     }
 
+    async function loadUsers() {
+      try {
+        const snap = await getDocs(collection(db, "users"));
+        usersList = snap.docs.map(d => d.data());
+      } catch (e) { usersList = []; }
+    }
+
     async function loadAudits() {
       try {
         const q = query(collection(db, "audits"), orderBy("date", "desc"));
@@ -240,6 +238,12 @@
         allAudits = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       } catch (e) { allAudits = []; }
       render();
+    }
+
+    function getGestores() {
+      const names = new Set(DEFAULT_GESTORES);
+      usersList.forEach(u => { if (u.displayName) names.add(u.displayName); });
+      return Array.from(names).sort((a, b) => a.localeCompare(b, "pt"));
     }
 
     function showView(view) {
@@ -265,6 +269,7 @@
           <div class="card">
             <h3>Criar Conta de Utilizador</h3>
             <div class="form-group"><label>Email</label><input type="email" id="new-email"></div>
+            <div class="form-group"><label>Nome a apresentar</label><input type="text" id="new-displayname" placeholder="ex: José Sousa"></div>
             <div class="form-group"><label>Password</label><input type="password" id="new-password"></div>
             <button class="btn" id="create-btn">Criar conta</button>
             <p id="admin-msg" class="small"></p>
@@ -273,7 +278,7 @@
         `;
         document.getElementById("change-pass-btn").addEventListener("click", changePassword);
         document.getElementById("create-btn").addEventListener("click", createUser);
-        loadUsers();
+        loadUsersDisplay();
         return;
       }
 
@@ -301,18 +306,36 @@
       } else if (currentView === "dataEntry") {
         title.textContent = "Dados de Pré-Auditoria";
         const w = workshops.find(x => x.id === currentWorkshopId);
+        const gestores = getGestores();
         main.innerHTML = `
           <div class="card"><h3>${w ? w.name : ""}</h3></div>
-          <div class="form-group"><label>Horas Trabalhadas / Técnico / Dia</label><input type="number" step="0.1" id="horasTec"></div>
-          <div class="form-group"><label>Horas Trabalhadas / m²</label><input type="number" step="0.1" id="horasM2"></div>
-          <div class="form-group"><label>CPUs / Mês</label><input type="number" id="cpusMes"></div>
+          <div class="form-group">
+            <label>Gestor de Área</label>
+            <select id="gestorArea">
+              <option value="">— Selecionar —</option>
+              ${gestores.map(g => `<option value="${g}">${g}</option>`).join("")}
+            </select>
+          </div>
+          <div class="form-group"><label>Responsável Após-Venda</label><input type="text" id="respPosVenda" placeholder="Nome"></div>
+          <div class="form-group"><label>Horas Trabalhadas / Técnico / Dia (atual %)</label><input type="number" step="0.1" id="horasTec"></div>
+          <div class="form-group"><label>Objetivo Horas / Técnico / Dia (%)</label><input type="number" step="0.1" id="objHorasTec" value="80"></div>
+          <div class="form-group"><label>Horas Trabalhadas / m² (atual %)</label><input type="number" step="0.1" id="horasM2"></div>
+          <div class="form-group"><label>Objetivo Horas / m² (%)</label><input type="number" step="0.1" id="objHorasM2"></div>
+          <div class="form-group"><label>CPUs / Mês (atual)</label><input type="number" id="cpusMes"></div>
+          <div class="form-group"><label>Objetivo CPUs / Mês</label><input type="number" id="objCpus"></div>
           <div class="form-group"><label>Taxa de Recomendação (%)</label><input type="number" id="recomendacao"></div>
+          <div class="form-group"><label>Objetivo Recomendação (%)</label><input type="number" id="objRecomendacao" value="80"></div>
           <div class="form-group"><label>Fix-It-Right (%)</label><input type="number" id="fir"></div>
+          <div class="form-group"><label>Objetivo Fix-It-Right (%)</label><input type="number" id="objFir" value="80"></div>
           <div class="form-group"><label>Técnicos Nível I</label><input type="number" id="tec1"></div>
           <div class="form-group"><label>Técnicos Nível II</label><input type="number" id="tec2"></div>
           <div class="form-group"><label>Técnicos Nível III</label><input type="number" id="tec3"></div>
           <div class="form-group"><label>Técnicos Nível IV</label><input type="number" id="tec4"></div>
-          <div class="form-group"><label>Assessores de Serviço</label><input type="number" id="assessores"></div>
+          <div class="form-group"><label>PMT</label><input type="number" id="pmt"></div>
+          <div class="form-group"><label>Assessores Nível I</label><input type="number" id="ast1"></div>
+          <div class="form-group"><label>Assessores Nível II</label><input type="number" id="ast2"></div>
+          <div class="form-group"><label>Assessores Nível 100</label><input type="number" id="ast100"></div>
+          <div class="form-group"><label>Comentários Pré-Auditoria</label><textarea id="comentariosPre" rows="3" placeholder="Diagnóstico inicial / observações"></textarea></div>
           <button class="btn" id="start-btn">Iniciar Auditoria</button>
         `;
         document.getElementById("start-btn").addEventListener("click", saveDataAndStart);
@@ -338,7 +361,12 @@
             ${a.photo ? `<img src="${a.photo}" class="photo-preview">` : ""}
           </div>`;
         });
-        html += `<button class="btn" id="finish-btn">Concluir e Guardar</button>`;
+        html += `
+          <div class="card">
+            <h4>Comentários Gerais</h4>
+            <textarea id="comentariosGerais" rows="4" style="width:100%;padding:10px;margin-top:8px;border:1px solid #ddd;border-radius:6px;" placeholder="Comentários finais da auditoria">${currentAudit.comentariosGerais || ""}</textarea>
+          </div>
+          <button class="btn" id="finish-btn">Concluir e Guardar</button>`;
         main.innerHTML = html;
         document.getElementById("finish-btn").addEventListener("click", finishAudit);
       } else if (currentView === "relatorios") {
@@ -391,17 +419,29 @@
         userEmail: currentUser.email,
         answers: questions.map(q => ({ ...q, response: null, notes: "", photo: null })),
         kpis: {
+          gestorArea: document.getElementById("gestorArea").value,
+          respPosVenda: document.getElementById("respPosVenda").value,
           horasTec: +document.getElementById("horasTec").value || 0,
+          objHorasTec: +document.getElementById("objHorasTec").value || 0,
           horasM2: +document.getElementById("horasM2").value || 0,
+          objHorasM2: +document.getElementById("objHorasM2").value || 0,
           cpusMes: +document.getElementById("cpusMes").value || 0,
+          objCpus: +document.getElementById("objCpus").value || 0,
           recomendacao: +document.getElementById("recomendacao").value || 0,
+          objRecomendacao: +document.getElementById("objRecomendacao").value || 0,
           fir: +document.getElementById("fir").value || 0,
+          objFir: +document.getElementById("objFir").value || 0,
           tec1: +document.getElementById("tec1").value || 0,
           tec2: +document.getElementById("tec2").value || 0,
           tec3: +document.getElementById("tec3").value || 0,
           tec4: +document.getElementById("tec4").value || 0,
-          assessores: +document.getElementById("assessores").value || 0
+          pmt: +document.getElementById("pmt").value || 0,
+          ast1: +document.getElementById("ast1").value || 0,
+          ast2: +document.getElementById("ast2").value || 0,
+          ast100: +document.getElementById("ast100").value || 0,
+          comentariosPre: document.getElementById("comentariosPre").value
         },
+        comentariosGerais: "",
         completed: false
       };
       showView("checklist");
@@ -418,6 +458,8 @@
 
     async function finishAudit() {
       if (!currentAudit) return;
+      const cg = document.getElementById("comentariosGerais");
+      if (cg) currentAudit.comentariosGerais = cg.value;
       currentAudit.completed = true;
       await addDoc(collection(db, "audits"), currentAudit);
       alert("Auditoria guardada e partilhada!");
@@ -445,23 +487,25 @@
           <div style="font-size:32px;font-weight:800;color:#EB0A1E;letter-spacing:3px;">TOYOTA</div>
           <div style="font-size:13px;color:#666;margin-top:4px;">RELATÓRIO DE AVALIAÇÃO - PROGRAMA DE PRODUTIVIDADE</div>
           <h3 style="margin:12px 0 4px;">${w ? w.name : a.workshopId}</h3>
-          <p class="small">${new Date(a.date).toLocaleDateString("pt-PT")} • ${a.userEmail || ""}</p>
+          <p class="small">${new Date(a.date).toLocaleDateString("pt-PT")} • Gestor: ${k.gestorArea || "—"} • Pós-Venda: ${k.respPosVenda || "—"}</p>
           <p style="font-size:22px;margin-top:8px;color:#EB0A1E;"><strong>${score}%</strong></p>
         </div>
 
         <div class="card">
           <h4 style="margin-bottom:10px;">Dados de Pré-Auditoria</h4>
           <table class="kpi-table">
-            <tr><th>Indicador</th><th>Valor</th></tr>
-            <tr><td>Horas Trabalhadas / Técnico / Dia</td><td>${k.horasTec || "-"}</td></tr>
-            <tr><td>Horas Trabalhadas / m²</td><td>${k.horasM2 || "-"}</td></tr>
-            <tr><td>CPUs / Mês</td><td>${k.cpusMes || "-"}</td></tr>
-            <tr><td>Taxa de Recomendação</td><td>${k.recomendacao || "-"}%</td></tr>
-            <tr><td>Fix-It-Right</td><td>${k.fir || "-"}%</td></tr>
+            <tr><th>Indicador</th><th>Valor Atual</th><th>Objetivo</th></tr>
+            <tr><td>Horas / Técnico / Dia</td><td>${k.horasTec || "-"}%</td><td>${k.objHorasTec || "-"}%</td></tr>
+            <tr><td>Horas / m²</td><td>${k.horasM2 || "-"}%</td><td>${k.objHorasM2 || "-"}%</td></tr>
+            <tr><td>CPUs / Mês</td><td>${k.cpusMes || "-"}</td><td>${k.objCpus || "-"}</td></tr>
+            <tr><td>Taxa de Recomendação</td><td>${k.recomendacao || "-"}%</td><td>${k.objRecomendacao || "-"}%</td></tr>
+            <tr><td>Fix-It-Right</td><td>${k.fir || "-"}%</td><td>${k.objFir || "-"}%</td></tr>
           </table>
           <div style="margin-top:12px;font-size:14px;">
-            <strong>Técnicos:</strong> N1 ${k.tec1||0} · N2 ${k.tec2||0} · N3 ${k.tec3||0} · N4 ${k.tec4||0} · Assessores ${k.assessores||0}
+            <strong>Técnicos:</strong> N1 ${k.tec1||0} · N2 ${k.tec2||0} · N3 ${k.tec3||0} · N4 ${k.tec4||0} · PMT ${k.pmt||0}<br>
+            <strong>Assessores:</strong> N1 ${k.ast1||0} · N2 ${k.ast2||0} · Nível 100 ${k.ast100||0}
           </div>
+          ${k.comentariosPre ? `<p style="margin-top:10px;"><strong>Diagnóstico Inicial:</strong> ${k.comentariosPre}</p>` : ""}
         </div>
 
         <div class="score-grid">
@@ -472,15 +516,19 @@
           <canvas id="radarChart" height="280"></canvas>
         </div>
 
-        <div class="gain-box">Ganho Financeiro Estimado<br>85 000 €</div>
-
         <h4 style="margin:16px 0 8px;">Grelha de Avaliação</h4>
-        ${a.answers.map(ans => `<div class="card">
-          <strong>${ans.id} ${ans.text}</strong><br>
-          <span class="status ${ans.response==='sim'?'completo':ans.response==='nao'?'emcurso':'pendente'}">${ans.response || '—'}</span>
-          ${ans.notes ? `<p class="small" style="margin-top:6px;">${ans.notes}</p>` : ""}
-          ${ans.photo ? `<img src="${ans.photo}" class="photo-preview">` : ""}
-        </div>`).join("")}
+        ${areas.map(area => {
+          const qs = a.answers.filter(ans => ans.area === area);
+          return `<div class="area-title">${area}</div>` + qs.map(ans => `
+            <div class="card ${ans.response==='sim'?'color-sim':ans.response==='nao'?'color-nao':'color-na'}">
+              <strong>${ans.id} ${ans.text}</strong><br>
+              <span class="status ${ans.response==='sim'?'completo':ans.response==='nao'?'emcurso':'pendente'}">${ans.response || '—'}</span>
+              ${ans.notes ? `<p class="small" style="margin-top:6px;">${ans.notes}</p>` : ""}
+              ${ans.photo ? `<img src="${ans.photo}" class="photo-preview">` : ""}
+            </div>`).join("");
+        }).join("")}
+
+        ${a.comentariosGerais ? `<div class="card"><strong>Comentários Gerais:</strong><p>${a.comentariosGerais}</p></div>` : ""}
 
         <button class="btn" onclick="exportPDF('${id}')">Exportar PDF</button>
         <button class="btn btn-secondary" onclick="exportExcel('${id}')">Exportar Excel</button>
@@ -521,9 +569,7 @@
         alert("Auditoria eliminada.");
         await loadAudits();
         showView("relatorios");
-      } catch (e) {
-        alert("Erro ao eliminar: " + e.message);
-      }
+      } catch (e) { alert("Erro ao eliminar: " + e.message); }
     };
 
     window.exportPDF = async (id) => {
@@ -545,113 +591,129 @@
 
       function addHeaderFooter(doc, pageNum) {
         doc.setFillColor(235, 10, 30);
-        doc.rect(0, 0, pageWidth, 18, "F");
+        doc.rect(0, 0, pageWidth, 16, "F");
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(14);
+        doc.setFontSize(12);
         doc.setFont(undefined, "bold");
-        doc.text("TOYOTA", 12, 12);
+        doc.text("TOYOTA", 12, 11);
         doc.setFontSize(8);
         doc.setFont(undefined, "normal");
-        doc.text("Programa de Produtividade 2027", 50, 12);
-
+        doc.text("Programa de Produtividade", 45, 11);
         doc.setFillColor(245, 245, 245);
-        doc.rect(0, pageHeight - 12, pageWidth, 12, "F");
+        doc.rect(0, pageHeight - 10, pageWidth, 10, "F");
         doc.setTextColor(80, 80, 80);
         doc.setFontSize(7);
-        doc.text(`Toyota Caetano Portugal  |  Relatório de Avaliação  |  ${new Date().toLocaleDateString("pt-PT")}`, 12, pageHeight - 5);
-        doc.text(`Página ${pageNum}`, pageWidth - 25, pageHeight - 5);
+        doc.text(`Toyota Caetano Portugal | ${new Date().toLocaleDateString("pt-PT")}`, 12, pageHeight - 4);
+        doc.text(`Página ${pageNum}`, pageWidth - 25, pageHeight - 4);
       }
 
+      // Página 1
       addHeaderFooter(doc, page);
       doc.setTextColor(0);
       doc.setFontSize(11);
       doc.setFont(undefined, "bold");
-      doc.text("RELATÓRIO DE AVALIAÇÃO - PROGRAMA DE PRODUTIVIDADE", 12, 28);
-
-      doc.setFontSize(10);
+      doc.text("RELATÓRIO DE AVALIAÇÃO", 12, 24);
+      doc.setFontSize(9);
       doc.setFont(undefined, "normal");
-      doc.text(`Oficina: ${w ? w.name : a.workshopId}`, 12, 36);
-      doc.text(`Data da Visita: ${new Date(a.date).toLocaleDateString("pt-PT")}`, 12, 42);
-      doc.text(`Responsável: ${a.userEmail || "—"}`, 12, 48);
+      doc.text(`Oficina: ${w ? w.name : a.workshopId}`, 12, 32);
+      doc.text(`Data da Visita: ${new Date(a.date).toLocaleDateString("pt-PT")}`, 12, 37);
+      doc.text(`Gestor de Área: ${k.gestorArea || "—"}`, 12, 42);
+      doc.text(`Responsável Pós-Venda: ${k.respPosVenda || "—"}`, 12, 47);
 
-      doc.setFontSize(13);
-      doc.setTextColor(235, 10, 30);
-      doc.setFont(undefined, "bold");
-      doc.text(`Resultado Global: ${score}%`, 12, 58);
-
-      doc.setTextColor(0);
       doc.setFontSize(10);
       doc.setFont(undefined, "bold");
-      doc.text("1. Dados de Pré-Auditoria", 12, 70);
+      doc.text("Dados de Pré-Auditoria", 12, 56);
       doc.setFont(undefined, "normal");
       doc.setFontSize(8);
-      const kpis = [
-        ["Horas Trabalhadas / Técnico / Dia", k.horasTec || "—"],
-        ["Horas Trabalhadas / m²", k.horasM2 || "—"],
-        ["CPUs / Mês", k.cpusMes || "—"],
-        ["Taxa de Recomendação", (k.recomendacao || "—") + "%"],
-        ["Fix-It-Right", (k.fir || "—") + "%"],
-        ["Técnicos Nível I", k.tec1 || 0],
-        ["Técnicos Nível II", k.tec2 || 0],
-        ["Técnicos Nível III", k.tec3 || 0],
-        ["Técnicos Nível IV", k.tec4 || 0],
-        ["Assessores de Serviço", k.assessores || 0]
+      const kpiRows = [
+        ["Horas / Técnico / Dia", (k.horasTec||"-")+"%", (k.objHorasTec||"-")+"%"],
+        ["Horas / m²", (k.horasM2||"-")+"%", (k.objHorasM2||"-")+"%"],
+        ["CPUs / Mês", k.cpusMes||"-", k.objCpus||"-"],
+        ["Taxa de Recomendação", (k.recomendacao||"-")+"%", (k.objRecomendacao||"-")+"%"],
+        ["Fix-It-Right", (k.fir||"-")+"%", (k.objFir||"-")+"%"]
       ];
-      kpis.forEach((row, i) => {
-        doc.text(row[0], 12, 78 + i * 5);
-        doc.text(String(row[1]), 110, 78 + i * 5);
+      kpiRows.forEach((r, i) => {
+        doc.text(r[0], 12, 64 + i*5);
+        doc.text(String(r[1]), 90, 64 + i*5);
+        doc.text(String(r[2]), 130, 64 + i*5);
       });
 
-      doc.setFontSize(10);
-      doc.setFont(undefined, "bold");
-      doc.text("Pontuação por Área", 12, 135);
-      doc.setFont(undefined, "normal");
-      doc.setFontSize(8);
-      areas.forEach((area, i) => {
-        doc.text(`${area}: ${areaScores[i]}%`, 12, 142 + i * 5);
-      });
+      doc.setFontSize(9);
+      doc.text(`Técnicos: N1 ${k.tec1||0} | N2 ${k.tec2||0} | N3 ${k.tec3||0} | N4 ${k.tec4||0} | PMT ${k.pmt||0}`, 12, 95);
+      doc.text(`Assessores: N1 ${k.ast1||0} | N2 ${k.ast2||0} | Nível 100 ${k.ast100||0}`, 12, 101);
 
       const canvas = document.getElementById("radarChart");
       if (canvas) {
         try {
           const imgData = canvas.toDataURL("image/png");
-          doc.addImage(imgData, "PNG", 105, 130, 90, 75);
+          doc.addImage(imgData, "PNG", 110, 55, 85, 70);
         } catch (e) {}
       }
 
-      doc.setFontSize(10);
-      doc.setFont(undefined, "bold");
-      doc.setTextColor(40, 120, 40);
-      doc.text("Ganho Financeiro Estimado: 85 000 €", 12, 190);
+      if (k.comentariosPre) {
+        doc.setFontSize(9);
+        doc.setFont(undefined, "bold");
+        doc.text("Diagnóstico Inicial - Resumo", 12, 115);
+        doc.setFont(undefined, "normal");
+        doc.setFontSize(8);
+        const lines = doc.splitTextToSize(k.comentariosPre, 180);
+        doc.text(lines, 12, 122);
+      }
 
+      // Página 2 - Grelha
       doc.addPage();
       page++;
       addHeaderFooter(doc, page);
       doc.setTextColor(0);
       doc.setFontSize(11);
       doc.setFont(undefined, "bold");
-      doc.text("2. Grelha de Avaliação", 12, 28);
+      doc.text("Grelha de Avaliação", 12, 24);
 
-      doc.setFontSize(7.5);
-      let y = 36;
-      a.answers.forEach((ans) => {
-        if (y > 270) {
-          doc.addPage();
-          page++;
-          addHeaderFooter(doc, page);
-          y = 28;
-        }
+      let y = 32;
+      areas.forEach(area => {
+        if (y > 250) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+        doc.setFontSize(10);
         doc.setFont(undefined, "bold");
-        doc.text(`${ans.id}  ${ans.text.substring(0, 100)}`, 12, y);
-        doc.setFont(undefined, "normal");
-        doc.text(`Resposta: ${ans.response || "—"}`, 12, y + 3.5);
-        if (ans.notes) {
-          doc.text(`Obs: ${ans.notes.substring(0, 110)}`, 12, y + 7);
-          y += 12;
-        } else {
-          y += 9;
-        }
+        doc.setTextColor(235, 10, 30);
+        doc.text(area, 12, y);
+        doc.setTextColor(0);
+        y += 6;
+        const qs = a.answers.filter(ans => ans.area === area);
+        qs.forEach(ans => {
+          if (y > 270) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+          doc.setFontSize(7.5);
+          doc.setFont(undefined, "bold");
+          doc.text(`${ans.id} ${ans.text.substring(0, 95)}`, 12, y);
+          doc.setFont(undefined, "normal");
+          const resp = ans.response === "sim" ? "Conforme" : ans.response === "nao" ? "Não Conforme" : ans.response === "na" ? "N/A" : "—";
+          doc.text(resp, 160, y);
+          y += 4;
+          if (ans.notes) {
+            doc.text(`Obs: ${ans.notes.substring(0, 100)}`, 12, y);
+            y += 4;
+          }
+          y += 2;
+        });
+        y += 4;
       });
+
+      if (a.comentariosGerais) {
+        if (y > 250) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+        doc.setFontSize(10);
+        doc.setFont(undefined, "bold");
+        doc.text("Comentários Gerais", 12, y);
+        y += 6;
+        doc.setFont(undefined, "normal");
+        doc.setFontSize(8);
+        const lines = doc.splitTextToSize(a.comentariosGerais, 180);
+        doc.text(lines, 12, y);
+      }
+
+      doc.setFontSize(11);
+      doc.setFont(undefined, "bold");
+      doc.setTextColor(235, 10, 30);
+      if (y > 260) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+      doc.text(`Resultado Global: ${score}%`, 12, y + 12);
 
       doc.save(`Relatorio_Toyota_${(w ? w.name : "Oficina").replace(/\s+/g, "_")}.pdf`);
     };
@@ -659,16 +721,46 @@
     window.exportExcel = (id) => {
       const a = allAudits.find(x => x.id === id);
       const w = workshops.find(x => x.id === a.workshopId);
-      const data = a.answers.map(ans => ({
+      const k = a.kpis || {};
+      const wb = XLSX.utils.book_new();
+
+      const preData = [
+        ["RELATÓRIO DE AVALIAÇÃO"],
+        ["Oficina", w ? w.name : a.workshopId],
+        ["Data", new Date(a.date).toLocaleDateString("pt-PT")],
+        ["Gestor de Área", k.gestorArea || ""],
+        ["Responsável Pós-Venda", k.respPosVenda || ""],
+        [],
+        ["Indicador", "Valor Atual", "Objetivo"],
+        ["Horas / Técnico / Dia", k.horasTec, k.objHorasTec],
+        ["Horas / m²", k.horasM2, k.objHorasM2],
+        ["CPUs / Mês", k.cpusMes, k.objCpus],
+        ["Taxa de Recomendação", k.recomendacao, k.objRecomendacao],
+        ["Fix-It-Right", k.fir, k.objFir],
+        [],
+        ["Técnicos N1", k.tec1], ["N2", k.tec2], ["N3", k.tec3], ["N4", k.tec4], ["PMT", k.pmt],
+        ["Assessores N1", k.ast1], ["N2", k.ast2], ["Nível 100", k.ast100],
+        [],
+        ["Diagnóstico Inicial", k.comentariosPre || ""]
+      ];
+      const ws1 = XLSX.utils.aoa_to_sheet(preData);
+      XLSX.utils.book_append_sheet(wb, ws1, "Pré-Auditoria");
+
+      const grelha = a.answers.map(ans => ({
         Área: ans.area,
         Questão: ans.id,
         Descrição: ans.text,
         Resposta: ans.response || "",
         Observações: ans.notes || ""
       }));
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Auditoria");
+      const ws2 = XLSX.utils.json_to_sheet(grelha);
+      XLSX.utils.book_append_sheet(wb, ws2, "Grelha");
+
+      if (a.comentariosGerais) {
+        const ws3 = XLSX.utils.aoa_to_sheet([["Comentários Gerais"], [a.comentariosGerais]]);
+        XLSX.utils.book_append_sheet(wb, ws3, "Comentários");
+      }
+
       XLSX.writeFile(wb, `relatorio_${(w ? w.name : id).replace(/\s+/g,"_")}.xlsx`);
     };
 
@@ -682,9 +774,7 @@
         await updatePassword(currentUser, newPass);
         document.getElementById("pass-msg").textContent = "Password alterada com sucesso!";
         document.getElementById("new-pass").value = "";
-      } catch (e) {
-        document.getElementById("pass-msg").textContent = "Erro: " + e.message;
-      }
+      } catch (e) { document.getElementById("pass-msg").textContent = "Erro: " + e.message; }
     }
 
     async function addWorkshop() {
@@ -699,33 +789,32 @@
         document.getElementById("add-workshop-form").style.display = "none";
         await loadWorkshops();
         render();
-      } catch (e) {
-        document.getElementById("w-msg").textContent = "Erro: " + e.message;
-      }
+      } catch (e) { document.getElementById("w-msg").textContent = "Erro: " + e.message; }
     }
 
     async function createUser() {
       if (!isMaster) return;
       const email = document.getElementById("new-email").value;
       const password = document.getElementById("new-password").value;
+      const displayName = document.getElementById("new-displayname").value;
       if (!email || !password) return;
       try {
         await createUserWithEmailAndPassword(secondaryAuth, email, password);
-        await setDoc(doc(db, "users", email), { email, createdAt: new Date().toISOString(), createdBy: currentUser.email });
+        await setDoc(doc(db, "users", email), { email, displayName, createdAt: new Date().toISOString(), createdBy: currentUser.email });
         document.getElementById("admin-msg").textContent = "Conta criada com sucesso!";
         document.getElementById("new-email").value = "";
         document.getElementById("new-password").value = "";
-        loadUsers();
-      } catch (e) {
-        document.getElementById("admin-msg").textContent = "Erro: " + e.message;
-      }
+        document.getElementById("new-displayname").value = "";
+        await loadUsers();
+        loadUsersDisplay();
+      } catch (e) { document.getElementById("admin-msg").textContent = "Erro: " + e.message; }
     }
 
-    async function loadUsers() {
-      const snap = await getDocs(collection(db, "users"));
-      const list = snap.docs.map(d => d.data());
-      document.getElementById("users-list").innerHTML = list.length
-        ? list.map(u => `<div class="small">${u.email}</div>`).join("")
+    function loadUsersDisplay() {
+      const el = document.getElementById("users-list");
+      if (!el) return;
+      el.innerHTML = usersList.length
+        ? usersList.map(u => `<div class="small">${u.email} ${u.displayName ? " — " + u.displayName : ""}</div>`).join("")
         : "Nenhuma conta criada ainda.";
     }
 
