@@ -640,31 +640,37 @@
         doc.text(`Assessores: N1 ${k.ast1||0} | N2 ${k.ast2||0} | Sem Certificação ${k.ast100||0}`, 12, 116);
         if (k.comentariosPre) { doc.setFontSize(9); doc.setFont(undefined, "bold"); doc.text("Diagnóstico Inicial - Resumo", 12, 128); doc.setFont(undefined, "normal"); doc.setFontSize(8); const lines = doc.splitTextToSize(k.comentariosPre, 180); doc.text(lines, 12, 135); }
         doc.addPage(); page++; addHeaderFooter(doc, page);
-        doc.setTextColor(0); doc.setFontSize(11); doc.setFont(undefined, "bold"); doc.text("Grelha de Avaliação", 12, 24);
+        doc.setTextColor(0); doc.setFontSize(12); doc.setFont(undefined, "bold"); doc.text("2. Grelha de Avaliação", 12, 24);
         let y = 32;
         for (const area of areas) {
-          if (y > 220) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
-          doc.setFontSize(10); doc.setFont(undefined, "bold"); doc.setTextColor(235, 10, 30); doc.text(area, 12, y); doc.setTextColor(0); y += 7;
+          if (y > 230) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+          doc.setFillColor(235, 10, 30); doc.rect(10, y - 4, 190, 7, "F");
+          doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.setFont(undefined, "bold"); doc.text(area, 12, y);
+          doc.setTextColor(0); y += 8;
           const qs = a.answers.filter(ans => ans.area === area);
           let lastSub = "";
           qs.forEach(ans => {
             if (y > 255) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
-            if (ans.subArea && ans.subArea !== lastSub) { doc.setFontSize(9); doc.setFont(undefined, "bold"); doc.setTextColor(70, 70, 70); doc.text(ans.subArea, 12, y); doc.setTextColor(0); y += 5; lastSub = ans.subArea; }
-            doc.setFontSize(7.5); doc.setFont(undefined, "bold"); doc.text(`${ans.id} ${ans.text.substring(0, 88)}`, 12, y); doc.setFont(undefined, "normal"); doc.text(displayResponse(ans.response), 160, y); y += 4;
-            if (ans.notes) { doc.setFontSize(7); doc.text(`Obs: ${ans.notes.substring(0, 110)}`, 12, y); y += 4; }
-            y += 1.5;
+            if (ans.subArea && ans.subArea !== lastSub) { doc.setFontSize(8); doc.setFont(undefined, "bold"); doc.setTextColor(60, 60, 60); doc.text(ans.subArea, 12, y); doc.setTextColor(0); y += 4; lastSub = ans.subArea; }
+            doc.setFontSize(7.5); doc.setFont(undefined, "bold"); doc.text(ans.id, 12, y);
+            doc.setFont(undefined, "normal"); const desc = doc.splitTextToSize(ans.text, 100); doc.text(desc, 25, y);
+            const situacao = ans.response === "sim" ? "Conforme" : ans.response === "nao" ? "Não Conforme" : "N/A";
+            doc.setTextColor(ans.response === "sim" ? 40 : ans.response === "nao" ? 180 : 100, ans.response === "sim" ? 140 : 0, 0);
+            doc.text(situacao, 130, y); doc.setTextColor(0);
+            if (ans.notes) { const obs = doc.splitTextToSize(ans.notes, 50); doc.text(obs, 155, y); }
+            y += Math.max(desc.length * 3.5, 5);
           });
           const subScores = getSubAreaScores(a.answers, area);
           if (subScores.length > 0) {
             const img = await generateSpiderImage(subScores.map(s => s.name), subScores.map(s => s.score));
-            if (img) { if (y > 170) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; } doc.addImage(img, "PNG", 45, y, 120, 80); y += 88; }
+            if (img) { if (y > 180) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; } doc.setFontSize(9); doc.setFont(undefined, "bold"); doc.text(`Análise Gráfica - ${area.replace(/^2\.\d+\s/, "")}`, 12, y); y += 4; doc.addImage(img, "PNG", 50, y, 110, 70); y += 78; }
           }
-          y += 8;
+          y += 6;
         }
-        if (y > 170) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
-        doc.setFontSize(12); doc.setFont(undefined, "bold"); doc.setTextColor(235, 10, 30); doc.text(`Resultado Global: ${score}%`, 12, y + 8);
+        if (y > 180) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+        doc.setFontSize(12); doc.setFont(undefined, "bold"); doc.setTextColor(235, 10, 30); doc.text(`Resultado Global: ${score}%`, 12, y + 6);
         const globalImg = await generateSpiderImage(areas, areaScores);
-        if (globalImg) doc.addImage(globalImg, "PNG", 45, y + 14, 120, 80);
+        if (globalImg) doc.addImage(globalImg, "PNG", 50, y + 12, 110, 70);
         if (a.comentariosGerais) { doc.addPage(); page++; addHeaderFooter(doc, page); doc.setTextColor(0); doc.setFontSize(11); doc.setFont(undefined, "bold"); doc.text("Comentários Gerais", 12, 24); doc.setFont(undefined, "normal"); doc.setFontSize(9); const lines = doc.splitTextToSize(a.comentariosGerais, 180); doc.text(lines, 12, 34); }
         doc.save(`Relatorio_Toyota_${(w ? w.name : "Oficina").replace(/\s+/g, "_")}.pdf`);
       } catch (err) { alert("Erro ao gerar PDF: " + err.message); console.error(err); }
