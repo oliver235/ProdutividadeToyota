@@ -46,7 +46,7 @@
     .area-title { background: #EB0A1E; color: white; padding: 8px 12px; border-radius: 8px; margin: 16px 0 8px; font-weight: 600; }
     .subarea-title { background: #f1f3f5; color: #343a40; padding: 6px 12px; border-radius: 6px; margin: 12px 0 6px; font-weight: 600; font-size: 14px; }
     .photo-preview { max-width: 100%; max-height: 140px; margin-top: 8px; border-radius: 8px; }
-    .chart-container { background: white; border-radius: 12px; padding: 16px; margin: 12px 0; }
+    .chart-container { background: white; border-radius: 12px; padding: 16px; margin: 12px 0; height: 240px; }
     .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
     .score-item { background: #f8f9fa; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #e9ecef; }
     .score-item strong { display: block; font-size: 20px; color: #EB0A1E; }
@@ -55,7 +55,6 @@
     .kpi-table th, .kpi-table td, .compare-table th, .compare-table td { border: 1px solid #dee2e6; padding: 8px; text-align: left; }
     .kpi-table th { background: #EB0A1E; color: white; }
     .compare-table th { background: #343a40; color: white; }
-    .gain-box { background: #d4edda; border: 1px solid #c3e6cb; padding: 16px; text-align: center; border-radius: 8px; font-size: 18px; font-weight: 700; color: #155724; margin: 12px 0; }
     .color-sim { background: #d4edda !important; }
     .color-nao { background: #f8d7da !important; }
     .color-na { background: #fff3cd !important; }
@@ -199,30 +198,17 @@
       const errorEl = document.getElementById("login-error");
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
-
       errorEl.textContent = "";
-      errorEl.style.color = "#c0392b";
-
-      if (!email || !password) {
-        errorEl.textContent = "Preenche o email e a password";
-        return;
-      }
-
-      btn.disabled = true;
-      btn.textContent = "A entrar...";
-
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (e) {
-        console.error("Erro de login:", e);
-        let msg = e.message || "Erro desconhecido";
+      if (!email || !password) { errorEl.textContent = "Preenche o email e a password"; return; }
+      btn.disabled = true; btn.textContent = "A entrar...";
+      try { await signInWithEmailAndPassword(auth, email, password); }
+      catch (e) {
+        let msg = e.message || "Erro";
         if (e.code === "auth/user-not-found") msg = "Utilizador não encontrado";
         if (e.code === "auth/wrong-password") msg = "Password incorreta";
         if (e.code === "auth/invalid-email") msg = "Email inválido";
-        if (e.code === "auth/too-many-requests") msg = "Demasiadas tentativas. Tenta mais tarde";
         errorEl.textContent = "Erro: " + msg;
-        btn.disabled = false;
-        btn.textContent = "Entrar";
+        btn.disabled = false; btn.textContent = "Entrar";
       }
     });
 
@@ -320,12 +306,14 @@
         html += workshops.map(w => {
           const has = allAudits.some(a => a.workshopId === w.id && a.completed);
           return `<div class="card">
-            <div onclick="selectWorkshop('${w.id}')">
-              <strong>${w.name}</strong> ${w.code ? `<span class="small">(${w.code})</span>` : ""}<br>
-              <span class="small">${w.address || ""}</span>
-              <span class="status ${has ? 'completo' : 'emcurso'}" style="float:right">${has ? 'Com auditorias' : 'Sem'}</span>
+            <div style="display:flex; justify-content:space-between; align-items:center;" onclick="selectWorkshop('${w.id}')">
+              <div>
+                <strong>${w.name}</strong> ${w.code ? `<span class="small">(${w.code})</span>` : ""}<br>
+                <span class="small">${w.address || ""}</span>
+              </div>
+              <span class="status ${has ? 'completo' : 'emcurso'}">${has ? 'Com auditorias' : 'Sem'}</span>
             </div>
-            <button class="btn" style="margin-top:8px;background:#495057;" onclick="editWorkshop('${w.id}')">Editar Código / Dados</button>
+            <button class="btn" style="margin-top:8px; background:#6c757d; font-size:12px; padding:6px 10px; width:auto;" onclick="event.stopPropagation(); editWorkshop('${w.id}')">Editar</button>
           </div>`;
         }).join("") || "<div class='card'>Nenhuma oficina.</div>";
         main.innerHTML = html;
@@ -339,13 +327,7 @@
         const gestores = getGestores();
         main.innerHTML = `
           <div class="card"><h3>${w ? w.name : ""} ${w && w.code ? `(${w.code})` : ""}</h3></div>
-          <div class="form-group">
-            <label>Gestor de Área</label>
-            <select id="gestorArea">
-              <option value="">— Selecionar —</option>
-              ${gestores.map(g => `<option value="${g}">${g}</option>`).join("")}
-            </select>
-          </div>
+          <div class="form-group"><label>Gestor de Área</label><select id="gestorArea"><option value="">— Selecionar —</option>${gestores.map(g => `<option value="${g}">${g}</option>`).join("")}</select></div>
           <div class="form-group"><label>Responsável Após-Venda</label><input type="text" id="respPosVenda" placeholder="Nome"></div>
           <div class="form-group"><label>Horas Trabalhadas / Técnico / Dia (atual %)</label><input type="number" step="0.1" id="horasTec"></div>
           <div class="form-group"><label>Objetivo Horas / Técnico / Dia (%)</label><input type="number" step="0.1" id="objHorasTec" value="80"></div>
@@ -382,15 +364,8 @@
         let lastArea = "";
         let lastSub = "";
         currentAudit.answers.forEach((a, i) => {
-          if (a.area !== lastArea) {
-            html += `<div class="area-title">${a.area}</div>`;
-            lastArea = a.area;
-            lastSub = "";
-          }
-          if (a.subArea && a.subArea !== lastSub) {
-            html += `<div class="subarea-title">${a.subArea}</div>`;
-            lastSub = a.subArea;
-          }
+          if (a.area !== lastArea) { html += `<div class="area-title">${a.area}</div>`; lastArea = a.area; lastSub = ""; }
+          if (a.subArea && a.subArea !== lastSub) { html += `<div class="subarea-title">${a.subArea}</div>`; lastSub = a.subArea; }
           html += `<div class="card">
             <strong>${a.id} ${a.text}</strong>
             <div class="buttons-row">
@@ -403,12 +378,8 @@
             ${a.photo ? `<img src="${a.photo}" class="photo-preview">` : ""}
           </div>`;
         });
-        html += `
-          <div class="card">
-            <h4>Comentários Gerais</h4>
-            <textarea id="comentariosGerais" rows="4" style="width:100%;padding:10px;margin-top:8px;border:1px solid #ddd;border-radius:6px;" placeholder="Comentários finais da auditoria">${currentAudit.comentariosGerais || ""}</textarea>
-          </div>
-          <button class="btn" id="finish-btn">${currentAudit.id ? "Guardar Alterações" : "Concluir e Guardar"}</button>`;
+        html += `<div class="card"><h4>Comentários Gerais</h4><textarea id="comentariosGerais" rows="4" style="width:100%;padding:10px;margin-top:8px;border:1px solid #ddd;border-radius:6px;">${currentAudit.comentariosGerais || ""}</textarea></div>
+                 <button class="btn" id="finish-btn">${currentAudit.id ? "Guardar Alterações" : "Concluir e Guardar"}</button>`;
         main.innerHTML = html;
         document.getElementById("finish-btn").addEventListener("click", finishAudit);
       } else if (currentView === "relatorios") {
@@ -417,38 +388,21 @@
         main.innerHTML = allAudits.map(a => {
           const w = workshops.find(x => x.id === a.workshopId);
           const score = a.answers ? Math.round(a.answers.filter(ans => ans.response === "sim").length / a.answers.length * 100) : 0;
-          return `<div class="card" onclick="viewReport('${a.id}')">
-            <strong>${w ? w.name : a.workshopId} ${w && w.code ? `(${w.code})` : ""}</strong><br>
-            <span class="small">${new Date(a.date).toLocaleDateString("pt-PT")} • ${score}% • por ${a.userEmail || "—"}</span>
-          </div>`;
+          return `<div class="card" onclick="viewReport('${a.id}')"><strong>${w ? w.name : a.workshopId} ${w && w.code ? `(${w.code})` : ""}</strong><br><span class="small">${new Date(a.date).toLocaleDateString("pt-PT")} • ${score}% • por ${a.userEmail || "—"}</span></div>`;
         }).join("");
       } else if (currentView === "visao") {
         title.textContent = "Visão Geral";
         if (!allAudits.length) { main.innerHTML = `<div class="card">Sem dados para comparar.</div>`; return; }
         const byWorkshop = {};
-        allAudits.forEach(a => {
-          if (!byWorkshop[a.workshopId]) byWorkshop[a.workshopId] = [];
-          byWorkshop[a.workshopId].push(a);
-        });
+        allAudits.forEach(a => { if (!byWorkshop[a.workshopId]) byWorkshop[a.workshopId] = []; byWorkshop[a.workshopId].push(a); });
         let rows = "";
         Object.keys(byWorkshop).forEach(wid => {
           const ws = workshops.find(x => x.id === wid);
           const audits = byWorkshop[wid];
-          const avg = Math.round(audits.reduce((sum, a) => {
-            const s = a.answers ? a.answers.filter(ans => ans.response === "sim").length / a.answers.length * 100 : 0;
-            return sum + s;
-          }, 0) / audits.length);
+          const avg = Math.round(audits.reduce((sum, a) => sum + (a.answers ? a.answers.filter(ans => ans.response === "sim").length / a.answers.length * 100 : 0), 0) / audits.length);
           rows += `<tr><td>${ws ? ws.name : wid} ${ws && ws.code ? `(${ws.code})` : ""}</td><td>${audits.length}</td><td><strong>${avg}%</strong></td></tr>`;
         });
-        main.innerHTML = `
-          <div class="card">
-            <h3>Comparação entre Oficinas</h3>
-            <table class="compare-table">
-              <tr><th>Oficina</th><th>Auditorias</th><th>Média</th></tr>
-              ${rows}
-            </table>
-          </div>
-        `;
+        main.innerHTML = `<div class="card"><h3>Comparação entre Oficinas</h3><table class="compare-table"><tr><th>Oficina</th><th>Auditorias</th><th>Média</th></tr>${rows}</table></div>`;
       }
     }
 
@@ -460,11 +414,7 @@
       const name = prompt("Nome da Oficina:", w.name || "");
       const code = prompt("Código da Oficina:", w.code || "");
       const address = prompt("Morada:", w.address || "");
-      if (name !== null) {
-        updateDoc(doc(db, "workshops", id), { name, code: code || "", address: address || "" }).then(() => {
-          loadWorkshops().then(render);
-        });
-      }
+      if (name !== null) updateDoc(doc(db, "workshops", id), { name, code: code || "", address: address || "" }).then(() => loadWorkshops().then(render));
     };
 
     function saveDataAndStart() {
@@ -519,17 +469,14 @@
 
     async function finishAudit() {
       if (!currentAudit) return;
-
-      const naoRespondidas = currentAudit.answers.filter(a => !a.response || a.response === null);
+      const naoRespondidas = currentAudit.answers.filter(a => !a.response);
       if (naoRespondidas.length > 0) {
         alert(`Existem ${naoRespondidas.length} questão(ões) sem resposta.\nResponda a todas as questões (Sim / Não / N/A) antes de concluir.`);
         return;
       }
-
       const cg = document.getElementById("comentariosGerais");
       if (cg) currentAudit.comentariosGerais = cg.value;
       currentAudit.completed = true;
-
       if (currentAudit.id) {
         await updateDoc(doc(db, "audits", currentAudit.id), currentAudit);
         alert("Auditoria atualizada!");
@@ -553,10 +500,7 @@
         if (!subs[a.subArea]) subs[a.subArea] = [];
         subs[a.subArea].push(a);
       });
-      return Object.keys(subs).map(s => ({
-        name: s,
-        score: calcScore(subs[s])
-      }));
+      return Object.keys(subs).map(s => ({ name: s, score: calcScore(subs[s]) }));
     }
 
     window.viewReport = (id) => {
@@ -568,16 +512,8 @@
       const areaScores = areas.map(area => calcScore(a.answers.filter(ans => ans.area === area)));
       const k = a.kpis || {};
       const canDelete = currentUser && a.userEmail === currentUser.email;
-
       const falhas = a.answers.filter(ans => ans.response === "nao");
-      const criticasHtml = falhas.length
-        ? falhas.map(ans => `
-          <div class="card critica">
-            <strong>${ans.id} ${ans.text}</strong><br>
-            <span class="small">${ans.area} → ${ans.subArea || ""} • Oficina: ${w ? w.name : ""}</span>
-            ${ans.notes ? `<p class="small" style="margin-top:6px;">${ans.notes}</p>` : ""}
-          </div>`).join("")
-        : `<div class="card">Nenhuma falha registada nesta auditoria.</div>`;
+      const criticasHtml = falhas.length ? falhas.map(ans => `<div class="card critica"><strong>${ans.id} ${ans.text}</strong><br><span class="small">${ans.area} → ${ans.subArea || ""} • Oficina: ${w ? w.name : ""}</span>${ans.notes ? `<p class="small" style="margin-top:6px;">${ans.notes}</p>` : ""}</div>`).join("") : `<div class="card">Nenhuma falha registada nesta auditoria.</div>`;
 
       document.getElementById("header-title").textContent = "Relatório";
       document.getElementById("main-content").innerHTML = `
@@ -585,10 +521,13 @@
           <div style="font-size:32px;font-weight:800;color:#EB0A1E;letter-spacing:3px;">TOYOTA</div>
           <div style="font-size:13px;color:#666;margin-top:4px;">RELATÓRIO DE AVALIAÇÃO - PROGRAMA DE PRODUTIVIDADE</div>
           <h3 style="margin:12px 0 4px;">${w ? w.name : a.workshopId} ${w && w.code ? `(${w.code})` : ""}</h3>
-          <p class="small">${new Date(a.date).toLocaleDateString("pt-PT")} • Gestor: ${k.gestorArea || "—"} • Pós-Venda: ${k.respPosVenda || "—"}</p>
+          <div style="display:flex; justify-content:center; gap:24px; margin:8px 0; font-size:14px;">
+            <div><strong>Gestor de Área:</strong> ${k.gestorArea || "—"}</div>
+            <div><strong>Responsável Após-Venda:</strong> ${k.respPosVenda || "—"}</div>
+          </div>
+          <p class="small">${new Date(a.date).toLocaleDateString("pt-PT")}</p>
           <p style="font-size:22px;margin-top:8px;color:#EB0A1E;"><strong>${score}%</strong></p>
         </div>
-
         <div class="card">
           <h4 style="margin-bottom:10px;">Dados de Pré-Auditoria</h4>
           <table class="kpi-table">
@@ -602,46 +541,25 @@
             <tr><td>Eficiência Oficinal</td><td>${k.eficOficinal || "-"}%</td><td>${k.objEficOficinal || "-"}%</td></tr>
             <tr><td>Capacidade Real vs Plano</td><td>${k.capReal || "-"}%</td><td>${k.objCapReal || "-"}%</td></tr>
           </table>
-          <div style="margin-top:12px;font-size:14px;">
-            <strong>Técnicos:</strong> N1 ${k.tec1||0} · N2 ${k.tec2||0} · N3 ${k.tec3||0} · N4 ${k.tec4||0} · PMT ${k.pmt||0}<br>
-            <strong>Assessores:</strong> N1 ${k.ast1||0} · N2 ${k.ast2||0} · Sem Certificação ${k.ast100||0}
-          </div>
+          <div style="margin-top:12px;font-size:14px;"><strong>Técnicos:</strong> N1 ${k.tec1||0} · N2 ${k.tec2||0} · N3 ${k.tec3||0} · N4 ${k.tec4||0} · PMT ${k.pmt||0}<br><strong>Assessores:</strong> N1 ${k.ast1||0} · N2 ${k.ast2||0} · Sem Certificação ${k.ast100||0}</div>
           ${k.comentariosPre ? `<p style="margin-top:10px;"><strong>Diagnóstico Inicial:</strong> ${k.comentariosPre}</p>` : ""}
         </div>
-
-        <div class="score-grid">
-          ${areas.map((area, i) => `<div class="score-item"><strong>${areaScores[i]}%</strong><span class="small">${area}</span></div>`).join("")}
-        </div>
-
-        <div class="chart-container">
-          <canvas id="radarChart" height="280"></canvas>
-        </div>
-
+        <div class="score-grid">${areas.map((area, i) => `<div class="score-item"><strong>${areaScores[i]}%</strong><span class="small">${area}</span></div>`).join("")}</div>
+        <div class="chart-container"><canvas id="radarChart"></canvas></div>
         <h4 style="margin:16px 0 8px; color:#dc3545;">Questões Críticas (Não Conformidades)</h4>
         ${criticasHtml}
-
         <h4 style="margin:16px 0 8px;">Grelha de Avaliação</h4>
         ${areas.map(area => {
           const qs = a.answers.filter(ans => ans.area === area);
           let lastSub = "";
           let html = `<div class="area-title">${area}</div>`;
           qs.forEach(ans => {
-            if (ans.subArea && ans.subArea !== lastSub) {
-              html += `<div class="subarea-title">${ans.subArea}</div>`;
-              lastSub = ans.subArea;
-            }
-            html += `<div class="card ${ans.response==='sim'?'color-sim':ans.response==='nao'?'color-nao':'color-na'}">
-              <strong>${ans.id} ${ans.text}</strong><br>
-              <span class="status ${ans.response==='sim'?'completo':ans.response==='nao'?'emcurso':'pendente'}">${displayResponse(ans.response)}</span>
-              ${ans.notes ? `<p class="small" style="margin-top:6px;">${ans.notes}</p>` : ""}
-              ${ans.photo ? `<img src="${ans.photo}" class="photo-preview">` : ""}
-            </div>`;
+            if (ans.subArea && ans.subArea !== lastSub) { html += `<div class="subarea-title">${ans.subArea}</div>`; lastSub = ans.subArea; }
+            html += `<div class="card ${ans.response==='sim'?'color-sim':ans.response==='nao'?'color-nao':'color-na'}"><strong>${ans.id} ${ans.text}</strong><br><span class="status ${ans.response==='sim'?'completo':ans.response==='nao'?'emcurso':'pendente'}">${displayResponse(ans.response)}</span>${ans.notes ? `<p class="small" style="margin-top:6px;">${ans.notes}</p>` : ""}${ans.photo ? `<img src="${ans.photo}" class="photo-preview">` : ""}</div>`;
           });
           return html;
         }).join("")}
-
         ${a.comentariosGerais ? `<div class="card"><strong>Comentários Gerais:</strong><p>${a.comentariosGerais}</p></div>` : ""}
-
         <button class="btn" onclick="editAudit('${id}')">Editar Auditoria</button>
         <button class="btn" onclick="exportPDF('${id}')">Exportar PDF</button>
         <button class="btn btn-secondary" onclick="exportExcel('${id}')">Exportar Excel</button>
@@ -654,22 +572,8 @@
         if (ctx) {
           new Chart(ctx, {
             type: "radar",
-            data: {
-              labels: areas,
-              datasets: [{
-                label: "Pontuação %",
-                data: areaScores,
-                backgroundColor: "rgba(235, 10, 30, 0.18)",
-                borderColor: "#EB0A1E",
-                pointBackgroundColor: "#EB0A1E",
-                borderWidth: 2
-              }]
-            },
-            options: {
-              responsive: true,
-              scales: { r: { beginAtZero: true, max: 100, ticks: { stepSize: 20 } } },
-              plugins: { legend: { display: false } }
-            }
+            data: { labels: areas, datasets: [{ label: "Pontuação %", data: areaScores, backgroundColor: "rgba(235, 10, 30, 0.18)", borderColor: "#EB0A1E", pointBackgroundColor: "#EB0A1E", borderWidth: 2 }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { r: { beginAtZero: true, max: 100, ticks: { stepSize: 20 } } }, plugins: { legend: { display: false } } }
           });
         }
       }, 200);
@@ -685,45 +589,19 @@
 
     window.deleteAudit = async (id) => {
       if (!confirm("Eliminar esta auditoria permanentemente?")) return;
-      try {
-        await deleteDoc(doc(db, "audits", id));
-        alert("Auditoria eliminada.");
-        await loadAudits();
-        showView("relatorios");
-      } catch (e) { alert("Erro ao eliminar: " + e.message); }
+      try { await deleteDoc(doc(db, "audits", id)); alert("Auditoria eliminada."); await loadAudits(); showView("relatorios"); }
+      catch (e) { alert("Erro ao eliminar: " + e.message); }
     };
 
     async function generateSpiderImage(labels, data) {
       return new Promise(resolve => {
         try {
           const canvas = document.createElement("canvas");
-          canvas.width = 450;
-          canvas.height = 340;
+          canvas.width = 450; canvas.height = 340;
           const ctx = canvas.getContext("2d");
-          new Chart(ctx, {
-            type: "radar",
-            data: {
-              labels,
-              datasets: [{
-                label: "Pontuação %",
-                data,
-                backgroundColor: "rgba(235, 10, 30, 0.2)",
-                borderColor: "#EB0A1E",
-                pointBackgroundColor: "#EB0A1E",
-                borderWidth: 2
-              }]
-            },
-            options: {
-              responsive: false,
-              animation: false,
-              scales: { r: { beginAtZero: true, max: 100, ticks: { stepSize: 20 } } },
-              plugins: { legend: { display: false } }
-            }
-          });
+          new Chart(ctx, { type: "radar", data: { labels, datasets: [{ label: "Pontuação %", data, backgroundColor: "rgba(235, 10, 30, 0.2)", borderColor: "#EB0A1E", pointBackgroundColor: "#EB0A1E", borderWidth: 2 }] }, options: { responsive: false, animation: false, scales: { r: { beginAtZero: true, max: 100, ticks: { stepSize: 20 } } }, plugins: { legend: { display: false } } } });
           setTimeout(() => resolve(canvas.toDataURL("image/png")), 600);
-        } catch (e) {
-          resolve(null);
-        }
+        } catch (e) { resolve(null); }
       });
     }
 
@@ -736,163 +614,60 @@
         const score = calcScore(a.answers);
         const areas = [...new Set(a.answers.map(ans => ans.area))];
         const areaScores = areas.map(area => calcScore(a.answers.filter(ans => ans.area === area)));
-
         const doc = new jsPDF();
-        const pageWidth = 210;
-        const pageHeight = 297;
-        let page = 1;
-
+        const pageWidth = 210; const pageHeight = 297; let page = 1;
         function addHeaderFooter(doc, pageNum) {
-          doc.setFillColor(235, 10, 30);
-          doc.rect(0, 0, pageWidth, 16, "F");
-          doc.setTextColor(255, 255, 255);
-          doc.setFontSize(12);
-          doc.setFont(undefined, "bold");
-          doc.text("TOYOTA", 12, 11);
-          doc.setFontSize(8);
-          doc.setFont(undefined, "normal");
-          doc.text("Programa de Produtividade", 45, 11);
-          doc.setFillColor(245, 245, 245);
-          doc.rect(0, pageHeight - 10, pageWidth, 10, "F");
-          doc.setTextColor(80, 80, 80);
-          doc.setFontSize(7);
+          doc.setFillColor(235, 10, 30); doc.rect(0, 0, pageWidth, 16, "F");
+          doc.setTextColor(255, 255, 255); doc.setFontSize(12); doc.setFont(undefined, "bold"); doc.text("TOYOTA", 12, 11);
+          doc.setFontSize(8); doc.setFont(undefined, "normal"); doc.text("Programa de Produtividade", 45, 11);
+          doc.setFillColor(245, 245, 245); doc.rect(0, pageHeight - 10, pageWidth, 10, "F");
+          doc.setTextColor(80, 80, 80); doc.setFontSize(7);
           doc.text(`Toyota Caetano Portugal | ${new Date().toLocaleDateString("pt-PT")}`, 12, pageHeight - 4);
           doc.text(`Página ${pageNum}`, pageWidth - 25, pageHeight - 4);
         }
-
         addHeaderFooter(doc, page);
-        doc.setTextColor(0);
-        doc.setFontSize(11);
-        doc.setFont(undefined, "bold");
-        doc.text("RELATÓRIO DE AVALIAÇÃO", 12, 24);
-        doc.setFontSize(9);
-        doc.setFont(undefined, "normal");
+        doc.setTextColor(0); doc.setFontSize(11); doc.setFont(undefined, "bold"); doc.text("RELATÓRIO DE AVALIAÇÃO", 12, 24);
+        doc.setFontSize(9); doc.setFont(undefined, "normal");
         doc.text(`Oficina: ${w ? w.name : a.workshopId} ${w && w.code ? `(${w.code})` : ""}`, 12, 32);
         doc.text(`Data da Visita: ${new Date(a.date).toLocaleDateString("pt-PT")}`, 12, 37);
         doc.text(`Gestor de Área: ${k.gestorArea || "—"}`, 12, 42);
         doc.text(`Responsável Pós-Venda: ${k.respPosVenda || "—"}`, 12, 47);
-
-        doc.setFontSize(10);
-        doc.setFont(undefined, "bold");
-        doc.text("Dados de Pré-Auditoria", 12, 56);
-        doc.setFont(undefined, "normal");
-        doc.setFontSize(8);
-        const kpiRows = [
-          ["Horas / Técnico / Dia", (k.horasTec||"-")+"%", (k.objHorasTec||"-")+"%"],
-          ["Horas / m²", (k.horasM2||"-")+"%", (k.objHorasM2||"-")+"%"],
-          ["CPUs / Mês", k.cpusMes||"-", k.objCpus||"-"],
-          ["Taxa de Recomendação", (k.recomendacao||"-")+"%", (k.objRecomendacao||"-")+"%"],
-          ["Fix-It-Right", (k.fir||"-")+"%", (k.objFir||"-")+"%"],
-          ["Qualidade de Marcação", (k.qualMarcacao||"-")+"%", (k.objQualMarcacao||"-")+"%"],
-          ["Eficiência Oficinal", (k.eficOficinal||"-")+"%", (k.objEficOficinal||"-")+"%"],
-          ["Capacidade Real vs Plano", (k.capReal||"-")+"%", (k.objCapReal||"-")+"%"]
-        ];
-        kpiRows.forEach((r, i) => {
-          doc.text(r[0], 12, 64 + i*5);
-          doc.text(String(r[1]), 95, 64 + i*5);
-          doc.text(String(r[2]), 140, 64 + i*5);
-        });
-
-        doc.setFontSize(9);
-        doc.text(`Técnicos: N1 ${k.tec1||0} | N2 ${k.tec2||0} | N3 ${k.tec3||0} | N4 ${k.tec4||0} | PMT ${k.pmt||0}`, 12, 110);
+        doc.setFontSize(10); doc.setFont(undefined, "bold"); doc.text("Dados de Pré-Auditoria", 12, 56);
+        doc.setFont(undefined, "normal"); doc.setFontSize(8);
+        const kpiRows = [["Horas / Técnico / Dia", (k.horasTec||"-")+"%", (k.objHorasTec||"-")+"%"], ["Horas / m²", (k.horasM2||"-")+"%", (k.objHorasM2||"-")+"%"], ["CPUs / Mês", k.cpusMes||"-", k.objCpus||"-"], ["Taxa de Recomendação", (k.recomendacao||"-")+"%", (k.objRecomendacao||"-")+"%"], ["Fix-It-Right", (k.fir||"-")+"%", (k.objFir||"-")+"%"], ["Qualidade de Marcação", (k.qualMarcacao||"-")+"%", (k.objQualMarcacao||"-")+"%"], ["Eficiência Oficinal", (k.eficOficinal||"-")+"%", (k.objEficOficinal||"-")+"%"], ["Capacidade Real vs Plano", (k.capReal||"-")+"%", (k.objCapReal||"-")+"%"]];
+        kpiRows.forEach((r, i) => { doc.text(r[0], 12, 64 + i*5); doc.text(String(r[1]), 95, 64 + i*5); doc.text(String(r[2]), 140, 64 + i*5); });
+        doc.setFontSize(9); doc.text(`Técnicos: N1 ${k.tec1||0} | N2 ${k.tec2||0} | N3 ${k.tec3||0} | N4 ${k.tec4||0} | PMT ${k.pmt||0}`, 12, 110);
         doc.text(`Assessores: N1 ${k.ast1||0} | N2 ${k.ast2||0} | Sem Certificação ${k.ast100||0}`, 12, 116);
-
-        if (k.comentariosPre) {
-          doc.setFontSize(9);
-          doc.setFont(undefined, "bold");
-          doc.text("Diagnóstico Inicial - Resumo", 12, 128);
-          doc.setFont(undefined, "normal");
-          doc.setFontSize(8);
-          const lines = doc.splitTextToSize(k.comentariosPre, 180);
-          doc.text(lines, 12, 135);
-        }
-
-        doc.addPage();
-        page++;
-        addHeaderFooter(doc, page);
-        doc.setTextColor(0);
-        doc.setFontSize(11);
-        doc.setFont(undefined, "bold");
-        doc.text("Grelha de Avaliação", 12, 24);
-
+        if (k.comentariosPre) { doc.setFontSize(9); doc.setFont(undefined, "bold"); doc.text("Diagnóstico Inicial - Resumo", 12, 128); doc.setFont(undefined, "normal"); doc.setFontSize(8); const lines = doc.splitTextToSize(k.comentariosPre, 180); doc.text(lines, 12, 135); }
+        doc.addPage(); page++; addHeaderFooter(doc, page);
+        doc.setTextColor(0); doc.setFontSize(11); doc.setFont(undefined, "bold"); doc.text("Grelha de Avaliação", 12, 24);
         let y = 32;
         for (const area of areas) {
-          if (y > 200) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
-          doc.setFontSize(10);
-          doc.setFont(undefined, "bold");
-          doc.setTextColor(235, 10, 30);
-          doc.text(area, 12, y);
-          doc.setTextColor(0);
-          y += 6;
-
+          if (y > 220) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+          doc.setFontSize(10); doc.setFont(undefined, "bold"); doc.setTextColor(235, 10, 30); doc.text(area, 12, y); doc.setTextColor(0); y += 7;
           const qs = a.answers.filter(ans => ans.area === area);
           let lastSub = "";
           qs.forEach(ans => {
-            if (y > 250) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
-            if (ans.subArea && ans.subArea !== lastSub) {
-              doc.setFontSize(8.5);
-              doc.setFont(undefined, "bold");
-              doc.setTextColor(80, 80, 80);
-              doc.text(ans.subArea, 12, y);
-              doc.setTextColor(0);
-              y += 5;
-              lastSub = ans.subArea;
-            }
-            doc.setFontSize(7.5);
-            doc.setFont(undefined, "bold");
-            doc.text(`${ans.id} ${ans.text.substring(0, 85)}`, 12, y);
-            doc.setFont(undefined, "normal");
-            doc.text(displayResponse(ans.response), 155, y);
-            y += 4;
-            if (ans.notes) {
-              doc.text(`Obs: ${ans.notes.substring(0, 100)}`, 12, y);
-              y += 4;
-            }
-            y += 2;
+            if (y > 255) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+            if (ans.subArea && ans.subArea !== lastSub) { doc.setFontSize(9); doc.setFont(undefined, "bold"); doc.setTextColor(70, 70, 70); doc.text(ans.subArea, 12, y); doc.setTextColor(0); y += 5; lastSub = ans.subArea; }
+            doc.setFontSize(7.5); doc.setFont(undefined, "bold"); doc.text(`${ans.id} ${ans.text.substring(0, 88)}`, 12, y); doc.setFont(undefined, "normal"); doc.text(displayResponse(ans.response), 160, y); y += 4;
+            if (ans.notes) { doc.setFontSize(7); doc.text(`Obs: ${ans.notes.substring(0, 110)}`, 12, y); y += 4; }
+            y += 1.5;
           });
-
           const subScores = getSubAreaScores(a.answers, area);
           if (subScores.length > 0) {
             const img = await generateSpiderImage(subScores.map(s => s.name), subScores.map(s => s.score));
-            if (img) {
-              if (y > 180) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
-              doc.addImage(img, "PNG", 50, y, 110, 75);
-              y += 82;
-            }
+            if (img) { if (y > 170) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; } doc.addImage(img, "PNG", 45, y, 120, 80); y += 88; }
           }
-          y += 10;
+          y += 8;
         }
-
-        if (y > 180) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
-        doc.setFontSize(12);
-        doc.setFont(undefined, "bold");
-        doc.setTextColor(235, 10, 30);
-        doc.text(`Resultado Global: ${score}%`, 12, y + 10);
-
+        if (y > 170) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+        doc.setFontSize(12); doc.setFont(undefined, "bold"); doc.setTextColor(235, 10, 30); doc.text(`Resultado Global: ${score}%`, 12, y + 8);
         const globalImg = await generateSpiderImage(areas, areaScores);
-        if (globalImg) {
-          doc.addImage(globalImg, "PNG", 50, y + 16, 110, 75);
-        }
-
-        if (a.comentariosGerais) {
-          doc.addPage();
-          page++;
-          addHeaderFooter(doc, page);
-          doc.setTextColor(0);
-          doc.setFontSize(11);
-          doc.setFont(undefined, "bold");
-          doc.text("Comentários Gerais", 12, 24);
-          doc.setFont(undefined, "normal");
-          doc.setFontSize(9);
-          const lines = doc.splitTextToSize(a.comentariosGerais, 180);
-          doc.text(lines, 12, 34);
-        }
-
+        if (globalImg) doc.addImage(globalImg, "PNG", 45, y + 14, 120, 80);
+        if (a.comentariosGerais) { doc.addPage(); page++; addHeaderFooter(doc, page); doc.setTextColor(0); doc.setFontSize(11); doc.setFont(undefined, "bold"); doc.text("Comentários Gerais", 12, 24); doc.setFont(undefined, "normal"); doc.setFontSize(9); const lines = doc.splitTextToSize(a.comentariosGerais, 180); doc.text(lines, 12, 34); }
         doc.save(`Relatorio_Toyota_${(w ? w.name : "Oficina").replace(/\s+/g, "_")}.pdf`);
-      } catch (err) {
-        alert("Erro ao gerar PDF: " + err.message);
-        console.error(err);
-      }
+      } catch (err) { alert("Erro ao gerar PDF: " + err.message); console.error(err); }
     };
 
     window.exportExcel = (id) => {
@@ -900,63 +675,19 @@
       const w = workshops.find(x => x.id === a.workshopId);
       const k = a.kpis || {};
       const wb = XLSX.utils.book_new();
-
-      const preData = [
-        ["RELATÓRIO DE AVALIAÇÃO"],
-        ["Oficina", w ? w.name : a.workshopId],
-        ["Código", w ? w.code || "" : ""],
-        ["Data", new Date(a.date).toLocaleDateString("pt-PT")],
-        ["Gestor de Área", k.gestorArea || ""],
-        ["Responsável Pós-Venda", k.respPosVenda || ""],
-        [],
-        ["Indicador", "Valor Atual", "Objetivo"],
-        ["Horas / Técnico / Dia", k.horasTec, k.objHorasTec],
-        ["Horas / m²", k.horasM2, k.objHorasM2],
-        ["CPUs / Mês", k.cpusMes, k.objCpus],
-        ["Taxa de Recomendação", k.recomendacao, k.objRecomendacao],
-        ["Fix-It-Right", k.fir, k.objFir],
-        ["Qualidade de Marcação", k.qualMarcacao, k.objQualMarcacao],
-        ["Eficiência Oficinal", k.eficOficinal, k.objEficOficinal],
-        ["Capacidade Real vs Plano", k.capReal, k.objCapReal],
-        [],
-        ["Técnicos N1", k.tec1], ["N2", k.tec2], ["N3", k.tec3], ["N4", k.tec4], ["PMT", k.pmt],
-        ["Assessores N1", k.ast1], ["N2", k.ast2], ["Sem Certificação", k.ast100],
-        [],
-        ["Diagnóstico Inicial", k.comentariosPre || ""]
-      ];
-      const ws1 = XLSX.utils.aoa_to_sheet(preData);
-      XLSX.utils.book_append_sheet(wb, ws1, "Pré-Auditoria");
-
-      const grelha = a.answers.map(ans => ({
-        Área: ans.area,
-        "Sub-Área": ans.subArea || "",
-        Questão: ans.id,
-        Descrição: ans.text,
-        Resposta: displayResponse(ans.response),
-        Observações: ans.notes || ""
-      }));
-      const ws2 = XLSX.utils.json_to_sheet(grelha);
-      XLSX.utils.book_append_sheet(wb, ws2, "Grelha");
-
-      if (a.comentariosGerais) {
-        const ws3 = XLSX.utils.aoa_to_sheet([["Comentários Gerais"], [a.comentariosGerais]]);
-        XLSX.utils.book_append_sheet(wb, ws3, "Comentários");
-      }
-
+      const preData = [["RELATÓRIO DE AVALIAÇÃO"], ["Oficina", w ? w.name : a.workshopId], ["Código", w ? w.code || "" : ""], ["Data", new Date(a.date).toLocaleDateString("pt-PT")], ["Gestor de Área", k.gestorArea || ""], ["Responsável Pós-Venda", k.respPosVenda || ""], [], ["Indicador", "Valor Atual", "Objetivo"], ["Horas / Técnico / Dia", k.horasTec, k.objHorasTec], ["Horas / m²", k.horasM2, k.objHorasM2], ["CPUs / Mês", k.cpusMes, k.objCpus], ["Taxa de Recomendação", k.recomendacao, k.objRecomendacao], ["Fix-It-Right", k.fir, k.objFir], ["Qualidade de Marcação", k.qualMarcacao, k.objQualMarcacao], ["Eficiência Oficinal", k.eficOficinal, k.objEficOficinal], ["Capacidade Real vs Plano", k.capReal, k.objCapReal], [], ["Técnicos N1", k.tec1], ["N2", k.tec2], ["N3", k.tec3], ["N4", k.tec4], ["PMT", k.pmt], ["Assessores N1", k.ast1], ["N2", k.ast2], ["Sem Certificação", k.ast100], [], ["Diagnóstico Inicial", k.comentariosPre || ""]];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(preData), "Pré-Auditoria");
+      const grelha = a.answers.map(ans => ({ Área: ans.area, "Sub-Área": ans.subArea || "", Questão: ans.id, Descrição: ans.text, Resposta: displayResponse(ans.response), Observações: ans.notes || "" }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(grelha), "Grelha");
+      if (a.comentariosGerais) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Comentários Gerais"], [a.comentariosGerais]]), "Comentários");
       XLSX.writeFile(wb, `relatorio_${(w ? w.name : id).replace(/\s+/g,"_")}.xlsx`);
     };
 
     async function changePassword() {
       const newPass = document.getElementById("new-pass").value;
-      if (!newPass || newPass.length < 6) {
-        document.getElementById("pass-msg").textContent = "Password mínima de 6 caracteres";
-        return;
-      }
-      try {
-        await updatePassword(currentUser, newPass);
-        document.getElementById("pass-msg").textContent = "Password alterada com sucesso!";
-        document.getElementById("new-pass").value = "";
-      } catch (e) { document.getElementById("pass-msg").textContent = "Erro: " + e.message; }
+      if (!newPass || newPass.length < 6) { document.getElementById("pass-msg").textContent = "Password mínima de 6 caracteres"; return; }
+      try { await updatePassword(currentUser, newPass); document.getElementById("pass-msg").textContent = "Password alterada com sucesso!"; document.getElementById("new-pass").value = ""; }
+      catch (e) { document.getElementById("pass-msg").textContent = "Erro: " + e.message; }
     }
 
     async function addWorkshop() {
@@ -964,16 +695,8 @@
       const code = document.getElementById("new-w-code").value.trim();
       const address = document.getElementById("new-w-address").value.trim();
       if (!name) return;
-      try {
-        await addDoc(collection(db, "workshops"), { name, code, address });
-        document.getElementById("w-msg").textContent = "Oficina criada!";
-        document.getElementById("new-w-name").value = "";
-        document.getElementById("new-w-code").value = "";
-        document.getElementById("new-w-address").value = "";
-        document.getElementById("add-workshop-form").style.display = "none";
-        await loadWorkshops();
-        render();
-      } catch (e) { document.getElementById("w-msg").textContent = "Erro: " + e.message; }
+      try { await addDoc(collection(db, "workshops"), { name, code, address }); document.getElementById("w-msg").textContent = "Oficina criada!"; document.getElementById("add-workshop-form").style.display = "none"; await loadWorkshops(); render(); }
+      catch (e) { document.getElementById("w-msg").textContent = "Erro: " + e.message; }
     }
 
     async function createUser() {
@@ -982,29 +705,17 @@
       const password = document.getElementById("new-password").value;
       const displayName = document.getElementById("new-displayname").value;
       if (!email || !password) return;
-      try {
-        await createUserWithEmailAndPassword(secondaryAuth, email, password);
-        await setDoc(doc(db, "users", email), { email, displayName, createdAt: new Date().toISOString(), createdBy: currentUser.email });
-        document.getElementById("admin-msg").textContent = "Conta criada com sucesso!";
-        document.getElementById("new-email").value = "";
-        document.getElementById("new-password").value = "";
-        document.getElementById("new-displayname").value = "";
-        await loadUsers();
-        loadUsersDisplay();
-      } catch (e) { document.getElementById("admin-msg").textContent = "Erro: " + e.message; }
+      try { await createUserWithEmailAndPassword(secondaryAuth, email, password); await setDoc(doc(db, "users", email), { email, displayName, createdAt: new Date().toISOString(), createdBy: currentUser.email }); document.getElementById("admin-msg").textContent = "Conta criada com sucesso!"; await loadUsers(); loadUsersDisplay(); }
+      catch (e) { document.getElementById("admin-msg").textContent = "Erro: " + e.message; }
     }
 
     function loadUsersDisplay() {
       const el = document.getElementById("users-list");
       if (!el) return;
-      el.innerHTML = usersList.length
-        ? usersList.map(u => `<div class="small">${u.email} ${u.displayName ? " — " + u.displayName : ""}</div>`).join("")
-        : "Nenhuma conta criada ainda.";
+      el.innerHTML = usersList.length ? usersList.map(u => `<div class="small">${u.email} ${u.displayName ? " — " + u.displayName : ""}</div>`).join("") : "Nenhuma conta criada ainda.";
     }
 
-    document.querySelectorAll(".nav-btn").forEach(btn => {
-      btn.addEventListener("click", () => showView(btn.dataset.view));
-    });
+    document.querySelectorAll(".nav-btn").forEach(btn => { btn.addEventListener("click", () => showView(btn.dataset.view)); });
   </script>
 </body>
 </html>
