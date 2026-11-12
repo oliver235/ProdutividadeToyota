@@ -646,35 +646,35 @@
           if (y > 220) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
           doc.setFillColor(235, 10, 30); doc.rect(10, y - 4, 190, 7, "F");
           doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.setFont(undefined, "bold"); doc.text(area, 12, y);
-          doc.setTextColor(0); y += 8;
+          doc.setTextColor(0); y += 7;
           const qs = a.answers.filter(ans => ans.area === area);
           let lastSub = "";
           qs.forEach(ans => {
-            if (y > 250) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+            if (y > 255) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
             if (ans.subArea && ans.subArea !== lastSub) {
-              doc.setFontSize(8.5); doc.setFont(undefined, "bold"); doc.setTextColor(60, 60, 60);
-              doc.text("► " + ans.subArea, 12, y); doc.setTextColor(0); y += 5;
+              doc.setFontSize(8); doc.setFont(undefined, "bold"); doc.setTextColor(50, 50, 50);
+              doc.text(ans.subArea, 12, y); doc.setTextColor(0); y += 4;
               lastSub = ans.subArea;
             }
             doc.setFontSize(7.5); doc.setFont(undefined, "bold"); doc.text(ans.id, 12, y);
-            doc.setFont(undefined, "normal"); const desc = doc.splitTextToSize(ans.text, 95); doc.text(desc, 25, y);
+            doc.setFont(undefined, "normal"); const desc = doc.splitTextToSize(ans.text, 100); doc.text(desc, 25, y);
             const situacao = ans.response === "sim" ? "Conforme" : ans.response === "nao" ? "Não Conforme" : "N/A";
             doc.setTextColor(ans.response === "sim" ? 40 : ans.response === "nao" ? 180 : 100, ans.response === "sim" ? 140 : 0, 0);
-            doc.text(situacao, 135, y); doc.setTextColor(0);
-            if (ans.notes) { const obs = doc.splitTextToSize(ans.notes, 45); doc.text(obs, 160, y); }
-            y += Math.max(desc.length * 3.5, 5);
+            doc.text(situacao, 140, y); doc.setTextColor(0);
+            if (ans.notes) { const obs = doc.splitTextToSize(ans.notes, 45); doc.text(obs, 165, y); }
+            y += Math.max(desc.length * 3.2, 4.5);
           });
           const subScores = getSubAreaScores(a.answers, area);
           if (subScores.length > 0) {
             const img = await generateSpiderImage(subScores.map(s => s.name), subScores.map(s => s.score));
-            if (img) { if (y > 170) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; } doc.setFontSize(9); doc.setFont(undefined, "bold"); doc.text(`Análise Gráfica - ${area.replace(/^2\.\d+\s/, "")}`, 12, y); y += 4; doc.addImage(img, "PNG", 50, y, 110, 70); y += 78; }
+            if (img) { if (y > 185) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; } doc.setFontSize(8); doc.setFont(undefined, "bold"); doc.text(`Análise Gráfica - ${area.replace(/^2\.\d+\s/, "")}`, 12, y); y += 3; doc.addImage(img, "PNG", 55, y, 100, 65); y += 70; }
           }
-          y += 8;
+          y += 4;
         }
-        if (y > 170) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
-        doc.setFontSize(12); doc.setFont(undefined, "bold"); doc.setTextColor(235, 10, 30); doc.text(`Resultado Global: ${score}%`, 12, y + 6);
+        if (y > 185) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+        doc.setFontSize(12); doc.setFont(undefined, "bold"); doc.setTextColor(235, 10, 30); doc.text(`Resultado Global: ${score}%`, 12, y + 5);
         const globalImg = await generateSpiderImage(areas, areaScores);
-        if (globalImg) doc.addImage(globalImg, "PNG", 50, y + 12, 110, 70);
+        if (globalImg) doc.addImage(globalImg, "PNG", 55, y + 10, 100, 65);
         if (a.comentariosGerais) { doc.addPage(); page++; addHeaderFooter(doc, page); doc.setTextColor(0); doc.setFontSize(11); doc.setFont(undefined, "bold"); doc.text("Comentários Gerais", 12, 24); doc.setFont(undefined, "normal"); doc.setFontSize(9); const lines = doc.splitTextToSize(a.comentariosGerais, 180); doc.text(lines, 12, 34); }
         doc.save(`Relatorio_Toyota_${(w ? w.name : "Oficina").replace(/\s+/g, "_")}.pdf`);
       } catch (err) { alert("Erro ao gerar PDF: " + err.message); console.error(err); }
