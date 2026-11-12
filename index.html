@@ -759,7 +759,7 @@
           doc.text(lines, 12, 135);
         }
 
-        // Página 2 - Grelha
+        // Página 2 - Grelha com spider no final de cada sub-área
         doc.addPage();
         page++;
         addHeaderFooter(doc, page);
@@ -780,9 +780,25 @@
 
           const qs = a.answers.filter(ans => ans.area === area);
           let lastSub = "";
-          qs.forEach(ans => {
+          let subQuestions = [];
+
+          for (let i = 0; i < qs.length; i++) {
+            const ans = qs[i];
             if (y > 260) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+
             if (ans.subArea && ans.subArea !== lastSub) {
+              // Se havia uma sub-área anterior, colocar o spider dela
+              if (lastSub && subQuestions.length > 0) {
+                const subScore = calcScore(subQuestions);
+                const img = await generateSpiderImage([lastSub], [subScore]);
+                if (img && y > 190) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+                if (img) {
+                  doc.addImage(img, "PNG", 60, y, 90, 60);
+                  y += 68;
+                }
+                subQuestions = [];
+              }
+
               doc.setFontSize(8.5);
               doc.setFont(undefined, "bold");
               doc.setTextColor(80, 80, 80);
@@ -791,6 +807,7 @@
               y += 5;
               lastSub = ans.subArea;
             }
+
             doc.setFontSize(7.5);
             doc.setFont(undefined, "bold");
             doc.text(`${ans.id} ${ans.text.substring(0, 85)}`, 12, y);
@@ -803,22 +820,23 @@
               y += 4;
             }
             y += 2;
-          });
+            subQuestions.push(ans);
+          }
 
-          // Spider da área (sub-áreas) se existirem
-          const subScores = getSubAreaScores(a.answers, area);
-          if (subScores.length > 1) {
-            const img = await generateSpiderImage(subScores.map(s => s.name), subScores.map(s => s.score));
+          // Spider da última sub-área da área
+          if (lastSub && subQuestions.length > 0) {
+            const subScore = calcScore(subQuestions);
+            const img = await generateSpiderImage([lastSub], [subScore]);
             if (img && y > 190) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
             if (img) {
-              doc.addImage(img, "PNG", 50, y, 110, 75);
-              y += 82;
+              doc.addImage(img, "PNG", 60, y, 90, 60);
+              y += 68;
             }
           }
           y += 8;
         }
 
-        // Resultado global
+        // Resultado global + spider das áreas principais
         if (y > 200) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
         doc.setFontSize(12);
         doc.setFont(undefined, "bold");
