@@ -87,6 +87,7 @@
     <nav class="bottom-nav">
       <button data-view="oficinas" class="nav-btn active">🏢<br>Oficinas</button>
       <button data-view="relatorios" class="nav-btn">📄<br>Relatórios</button>
+      <button data-view="visao" class="nav-btn">📊<br>Visão</button>
     </nav>
   </div>
 
@@ -118,47 +119,47 @@
     let workshops = [];
     let usersList = [];
     const questions = [
-      { area: "Agendamento", subArea: "Lead Times", id: "1.1", text: "A oficina tem a capacidade de marcar um serviço no prazo máximo de 3 dias úteis?" },
-      { area: "Agendamento", subArea: "Lead Times", id: "1.2", text: "O Lead Time de marcação transmitido na chamada de cliente mistério está de acordo com a informação disponível no Quadro de Marcações?" },
-      { area: "Agendamento", subArea: "Alocação de Recursos", id: "1.3", text: "A atribuição dos trabalhos agendados é efetuada em conformidade com a matriz de competências e a certificação técnica de cada colaborador?" },
-      { area: "Agendamento", subArea: "Códigos de Operação", id: "1.4", text: "Os Assessores de Serviço utilizam os códigos de operação padronizados (OTT) de acordo com o tipo de serviço agendado? Para operações locais, utilizam códigos de operação tabelados (OTI)?" },
-      { area: "Agendamento", subArea: "Ocupação da Agenda", id: "1.5", text: "O planeamento da agenda é gerido ativamente para garantir uma taxa de ocupação do quadro de marcações de 110%?" },
-      { area: "Agendamento", subArea: "Ocupação da Agenda", id: "1.6", text: "Os trabalhos em curso (reparações de continuidade ou pendentes) encontram-se devidamente identificados e contabilizados na capacidade diária do quadro de marcações?" },
-      { area: "Agendamento", subArea: "Marcação Telefónica", id: "1.7", text: "O cliente consegue estabelecer contacto com a oficina de uma forma rápida e eficaz? Em caso de não atendimento, é feita a devolução de chamada?" },
-      { area: "Agendamento", subArea: "Marcação Telefónica", id: "1.8", text: "Durante o contacto telefónico para agendamento, o interlocutor questiona proactivamente o cliente sobre necessidades adicionais, serviços complementares ou campanhas técnicas?" },
-      { area: "Agendamento", subArea: "Marcação Online", id: "1.9", text: "A disponibilidade de slots de serviço na plataforma de Marcação Online (OSB) encontra-se alinhada e sincronizada com a capacidade real do DMS?" },
-      { area: "Agendamento", subArea: "Peças de EPM", id: "1.10", text: "As encomendas de peças necessárias para as intervenções agendadas são realizadas via DMS através do sistema DPMM?" },
-      { area: "Agendamento", subArea: "Pré-preparação", id: "1.11", text: "Encontra-se implementado o processo de geração atempada da folha de pré-preparação da visita?" },
-      { area: "Agendamento", subArea: "Pré-preparação", id: "1.12", text: "A Oficina (equipa de AST's) faz reuniões de planeamento de trabalho no dia anterior?" },
-      { area: "Agendamento", subArea: "Trabalhos Internos", id: "1.13", text: "Os trabalhos internos (PDS/pré-entrega, montagem de acessórios, check-up de 145 pontos) são agendados e integrados na capacidade da oficina?" },
-      { area: "Processo de Receção", subArea: "Horário e Equipa", id: "2.1", text: "O horário de funcionamento e acolhimento da Receção está desfasado com o início do turno da Oficina?" },
-      { area: "Processo de Receção", subArea: "Horário e Equipa", id: "2.2", text: "A dimensão da equipa de AST's está ajustada para permitir o atendimento de todos os clientes à hora marcada?" },
-      { area: "Processo de Receção", subArea: "Atendimento à Hora", id: "2.3", text: "A Oficina atende os clientes estritamente à hora agendada, sem gerar filas de espera?" },
-      { area: "Processo de Receção", subArea: "Atendimento à Hora", id: "2.4", text: "O intervalo de tempo entre as marcações permite realizar o processo de receção de acordo com o preconizado pela marca?" },
-      { area: "Processo de Receção", subArea: "Receção Ativa", id: "2.5", text: "Durante o acolhimento (Receção Ativa), o Assessor de Serviço regista na Ordem de Reparação todas as necessidades adicionais identificadas?" },
-      { area: "Processo de Receção", subArea: "Diagnóstico", id: "2.6", text: "Nas reparações que exigem pré-diagnóstico, é utilizado o questionário de diagnóstico aprovado pelo NMSC?" },
-      { area: "Processo de Receção", subArea: "Comunicação", id: "2.7", text: "Existe um fluxo de comunicação estruturado entre a Receção e a Oficina?" },
-      { area: "Processo de Receção", subArea: "No-Shows", id: "2.8", text: "Encontra-se definido um procedimento de contacto imediato perante faltas de comparência (no-shows)?" },
-      { area: "Processo de Receção", subArea: "Entrega e Contacto", id: "2.9", text: "O Assessor de Serviço define com o cliente a hora de entrega da viatura antes de iniciar o serviço?" },
-      { area: "Processo de Receção", subArea: "Entrega e Contacto", id: "2.10", text: "O Assessor de Serviço indicou ao cliente alguma forma de contacto com a oficina durante a realização do serviço?" },
-      { area: "Gestão Oficinal", subArea: "Distribuição e Tempos", id: "3.1", text: "A distribuição das Ordens de Reparação é efetuada considerando a certificação técnica, a complexidade e o tempo disponível?" },
-      { area: "Gestão Oficinal", subArea: "Distribuição e Tempos", id: "3.2", text: "Os técnicos realizam o registo eletrónico de tempos (picagens) a 100% para todas as intervenções?" },
-      { area: "Gestão Oficinal", subArea: "Quadro e Controlo", id: "3.3", text: "O Quadro de Gestão Oficinal é mantido atualizado em tempo real?" },
-      { area: "Gestão Oficinal", subArea: "Quadro e Controlo", id: "3.4", text: "Todas as viaturas presentes na oficina têm Ordem de Reparação aberta?" },
-      { area: "Gestão Oficinal", subArea: "Gestão de Espera", id: "3.5", text: "A gestão das viaturas em espera de serviço é feita regularmente de acordo com a prioridade?" },
-      { area: "Gestão Oficinal", subArea: "Gestão de Espera", id: "3.6", text: "No caso de não comparecimento de um cliente, a slot reservada é alocada novamente para serviços em buffer?" },
-      { area: "Gestão Oficinal", subArea: "Peças e 5S", id: "3.7", text: "As peças e consumíveis são previamente separados e disponibilizados em carrinhos de pré-pulling?" },
-      { area: "Gestão Oficinal", subArea: "Peças e 5S", id: "3.8", text: "Os postos de trabalho cumprem os princípios 5S?" },
-      { area: "Gestão Oficinal", subArea: "Serviços Adicionais", id: "3.9", text: "A oficina dispõe de um processo/norma para alocar tempo na gestão da produção para serviços adicionais?" },
-      { area: "Gestão Oficinal", subArea: "Qualidade", id: "3.10", text: "É realizado e documentado o Controlo de Qualidade pós-reparação (Fix-It-Right)?" },
-      { area: "Gestão Oficinal", subArea: "Recursos", id: "3.11", text: "A estação de serviço apresenta acessos desimpedidos e cumpre os critérios 5S?" },
-      { area: "Gestão Oficinal", subArea: "Recursos", id: "3.12", text: "Ao nível de recursos humanos e estações de serviço, a oficina está ajustada às necessidades?" },
-      { area: "Gestão Oficinal", subArea: "Quadro Visual", id: "3.13", text: "A oficina utiliza um quadro visual para alocação de viaturas e prioridades de entrega?" },
-      { area: "Entrega", subArea: "Pontualidade", id: "4.1", text: "As viaturas são entregues à hora combinada com o cliente?" },
-      { area: "Entrega", subArea: "Pontualidade", id: "4.2", text: "Perante atrasos, o cliente é contactado com antecedência e a alteração é registada no DMS?" },
-      { area: "Entrega", subArea: "Explicação da Fatura", id: "4.3", text: "No momento da entrega, o Assessor de Serviço explica a fatura item por item?" },
-      { area: "Entrega", subArea: "Explicação da Fatura", id: "4.4", text: "No momento da explicação da fatura, o AST garante que todas as questões iniciais do cliente são explicadas?" },
-      { area: "Entrega", subArea: "Acompanhamento", id: "4.5", text: "O AST acompanha o cliente até à viatura, retirando as proteções na sua presença?" }
+      { area: "2.1 Agendamento", subArea: "Lead Time", id: "1.1", text: "A oficina tem a capacidade de marcar um serviço no prazo máximo de 3 dias úteis?" },
+      { area: "2.1 Agendamento", subArea: "Lead Time", id: "1.2", text: "O Lead Time de marcação transmitido na chamada de cliente mistério está de acordo com a informação disponível no Quadro de Marcações?" },
+      { area: "2.1 Agendamento", subArea: "Gestão de Capacidade/Alocação de Recursos", id: "1.3", text: "A atribuição dos trabalhos agendados é efetuada em conformidade com a matriz de competências e a certificação técnica de cada colaborador?" },
+      { area: "2.1 Agendamento", subArea: "Gestão de Capacidade/Alocação de Recursos", id: "1.4", text: "Os Assessores de Serviço utilizam os códigos de operação padronizados (OTT) de acordo com o tipo de serviço agendado? Para operações locais, utilizam códigos de operação tabelados (OTI)?" },
+      { area: "2.1 Agendamento", subArea: "Gestão de Capacidade/Alocação de Recursos", id: "1.5", text: "O planeamento da agenda é gerido ativamente para garantir uma taxa de ocupação do quadro de marcações de 110%?" },
+      { area: "2.1 Agendamento", subArea: "Gestão de Capacidade/Alocação de Recursos", id: "1.6", text: "Os trabalhos em curso (reparações de continuidade ou pendentes) encontram-se devidamente identificados e contabilizados na capacidade diária do quadro de marcações?" },
+      { area: "2.1 Agendamento", subArea: "Marcação Telefónica/Online", id: "1.7", text: "O cliente consegue estabelecer contacto com a oficina de uma forma rápida e eficaz? Em caso de não atendimento, é feita a devolução de chamada?" },
+      { area: "2.1 Agendamento", subArea: "Marcação Telefónica/Online", id: "1.8", text: "Durante o contacto telefónico para agendamento, o interlocutor questiona proactivamente o cliente sobre necessidades adicionais, serviços complementares ou campanhas técnicas?" },
+      { area: "2.1 Agendamento", subArea: "Marcação Telefónica/Online", id: "1.9", text: "A disponibilidade de slots de serviço na plataforma de Marcação Online (OSB) encontra-se alinhada e sincronizada com a capacidade real do DMS?" },
+      { area: "2.1 Agendamento", subArea: "Peças - DPMM", id: "1.10", text: "As encomendas de peças necessárias para as intervenções agendadas são realizadas via DMS através do sistema DPMM?" },
+      { area: "2.1 Agendamento", subArea: "Pré-Preparação da Visita", id: "1.11", text: "Encontra-se implementado o processo de geração atempada da folha de pré-preparação da visita?" },
+      { area: "2.1 Agendamento", subArea: "Pré-Preparação da Visita", id: "1.12", text: "A Oficina (equipa de AST's) faz reuniões de planeamento de trabalho no dia anterior?" },
+      { area: "2.1 Agendamento", subArea: "Serviços Internos", id: "1.13", text: "Os trabalhos internos (PDS/pré-entrega, montagem de acessórios, check-up de 145 pontos) são agendados e integrados na capacidade da oficina?" },
+      { area: "2.2 Processo de Receção", subArea: "Coordenação Receção-Oficina", id: "2.1", text: "O horário de funcionamento e acolhimento da Receção está desfasado com o início do turno da Oficina?" },
+      { area: "2.2 Processo de Receção", subArea: "Cumprimento Hora Marcada", id: "2.2", text: "A dimensão da equipa de AST's está ajustada para permitir o atendimento de todos os clientes à hora marcada?" },
+      { area: "2.2 Processo de Receção", subArea: "Cumprimento Hora Marcada", id: "2.3", text: "A Oficina atende os clientes estritamente à hora agendada, sem gerar filas de espera?" },
+      { area: "2.2 Processo de Receção", subArea: "Receção Ativa", id: "2.4", text: "O intervalo de tempo entre as marcações permite realizar o processo de receção de acordo com o preconizado pela marca?" },
+      { area: "2.2 Processo de Receção", subArea: "Receção Ativa", id: "2.5", text: "Durante o acolhimento (Receção Ativa), o Assessor de Serviço regista na Ordem de Reparação todas as necessidades adicionais identificadas?" },
+      { area: "2.2 Processo de Receção", subArea: "Pré-Diagnóstico", id: "2.6", text: "Nas reparações que exigem pré-diagnóstico, é utilizado o questionário de diagnóstico aprovado pelo NMSC?" },
+      { area: "2.2 Processo de Receção", subArea: "Comunicação Receção-Oficina", id: "2.7", text: "Existe um fluxo de comunicação estruturado entre a Receção e a Oficina?" },
+      { area: "2.2 Processo de Receção", subArea: "Não aparecimento do Cliente", id: "2.8", text: "Encontra-se definido um procedimento de contacto imediato perante faltas de comparência (no-shows)?" },
+      { area: "2.2 Processo de Receção", subArea: "Explicação do Serviço", id: "2.9", text: "O Assessor de Serviço define com o cliente a hora de entrega da viatura antes de iniciar o serviço?" },
+      { area: "2.2 Processo de Receção", subArea: "Explicação do Serviço", id: "2.10", text: "O Assessor de Serviço indicou ao cliente alguma forma de contacto com a oficina durante a realização do serviço?" },
+      { area: "2.3 Gestão Oficinal", subArea: "Atribuição de Trabalho", id: "3.1", text: "A distribuição das Ordens de Reparação é efetuada considerando a certificação técnica, a complexidade e o tempo disponível?" },
+      { area: "2.3 Gestão Oficinal", subArea: "Controlo de Picagens", id: "3.2", text: "Os técnicos realizam o registo eletrónico de tempos (picagens) a 100% para todas as intervenções?" },
+      { area: "2.3 Gestão Oficinal", subArea: "Quadro Gestão Oficinal", id: "3.3", text: "O Quadro de Gestão Oficinal é mantido atualizado em tempo real?" },
+      { area: "2.3 Gestão Oficinal", subArea: "Quadro Gestão Oficinal", id: "3.4", text: "Todas as viaturas presentes na oficina têm Ordem de Reparação aberta?" },
+      { area: "2.3 Gestão Oficinal", subArea: "Gestão de Buffer", id: "3.5", text: "A gestão das viaturas em espera de serviço é feita regularmente de acordo com a prioridade?" },
+      { area: "2.3 Gestão Oficinal", subArea: "Gestão de Buffer", id: "3.6", text: "No caso de não comparecimento de um cliente, a slot reservada é alocada novamente para serviços em buffer?" },
+      { area: "2.3 Gestão Oficinal", subArea: "Pré-Pulling", id: "3.7", text: "As peças e consumíveis são previamente separados e disponibilizados em carrinhos de pré-pulling?" },
+      { area: "2.3 Gestão Oficinal", subArea: "Muda no Posto de Trabalho", id: "3.8", text: "Os postos de trabalho cumprem os princípios 5S?" },
+      { area: "2.3 Gestão Oficinal", subArea: "Serviços Adicionais", id: "3.9", text: "A oficina dispõe de um processo/norma para alocar tempo na gestão da produção para serviços adicionais?" },
+      { area: "2.3 Gestão Oficinal", subArea: "Controlo de Qualidade", id: "3.10", text: "É realizado e documentado o Controlo de Qualidade pós-reparação (Fix-It-Right)?" },
+      { area: "2.3 Gestão Oficinal", subArea: "Lavagem", id: "3.11", text: "A estação de serviço apresenta acessos desimpedidos e cumpre os critérios 5S?" },
+      { area: "2.3 Gestão Oficinal", subArea: "Lavagem", id: "3.12", text: "Ao nível de recursos humanos e estações de serviço, a oficina está ajustada às necessidades?" },
+      { area: "2.3 Gestão Oficinal", subArea: "Lavagem", id: "3.13", text: "A oficina utiliza um quadro visual para alocação de viaturas e prioridades de entrega?" },
+      { area: "2.4 Entrega", subArea: "Cumprimento Hora Marcada", id: "4.1", text: "As viaturas são entregues à hora combinada com o cliente?" },
+      { area: "2.4 Entrega", subArea: "Gestão de Atrasos", id: "4.2", text: "Perante atrasos, o cliente é contactado com antecedência e a alteração é registada no DMS?" },
+      { area: "2.4 Entrega", subArea: "Explicação do Serviço/Produtos Retenção", id: "4.3", text: "No momento da entrega, o Assessor de Serviço explica a fatura item por item?" },
+      { area: "2.4 Entrega", subArea: "Explicação do Serviço/Produtos Retenção", id: "4.4", text: "No momento da explicação da fatura, o AST garante que todas as questões iniciais do cliente são explicadas?" },
+      { area: "2.4 Entrega", subArea: "Entrega da Viatura", id: "4.5", text: "O AST acompanha o cliente até à viatura, retirando as proteções na sua presença?" }
     ];
 
     let currentUser = null;
@@ -193,7 +194,6 @@
       }
     });
 
-    // Login corrigido e robusto
     document.getElementById("login-btn").addEventListener("click", async () => {
       const btn = document.getElementById("login-btn");
       const errorEl = document.getElementById("login-error");
@@ -213,7 +213,6 @@
 
       try {
         await signInWithEmailAndPassword(auth, email, password);
-        // Sucesso é tratado pelo onAuthStateChanged
       } catch (e) {
         console.error("Erro de login:", e);
         let msg = e.message || "Erro desconhecido";
@@ -377,7 +376,7 @@
         `;
         document.getElementById("start-btn").addEventListener("click", saveDataAndStart);
       } else if (currentView === "checklist") {
-        title.textContent = "Auditoria";
+        title.textContent = currentAudit && currentAudit.id ? "Editar Auditoria" : "Auditoria";
         const w = workshops.find(x => x.id === currentWorkshopId);
         let html = `<div class="card"><strong>${w ? w.name : ""} ${w && w.code ? `(${w.code})` : ""}</strong></div>`;
         let lastArea = "";
@@ -409,7 +408,7 @@
             <h4>Comentários Gerais</h4>
             <textarea id="comentariosGerais" rows="4" style="width:100%;padding:10px;margin-top:8px;border:1px solid #ddd;border-radius:6px;" placeholder="Comentários finais da auditoria">${currentAudit.comentariosGerais || ""}</textarea>
           </div>
-          <button class="btn" id="finish-btn">Concluir e Guardar</button>`;
+          <button class="btn" id="finish-btn">${currentAudit.id ? "Guardar Alterações" : "Concluir e Guardar"}</button>`;
         main.innerHTML = html;
         document.getElementById("finish-btn").addEventListener("click", finishAudit);
       } else if (currentView === "relatorios") {
@@ -423,6 +422,33 @@
             <span class="small">${new Date(a.date).toLocaleDateString("pt-PT")} • ${score}% • por ${a.userEmail || "—"}</span>
           </div>`;
         }).join("");
+      } else if (currentView === "visao") {
+        title.textContent = "Visão Geral";
+        if (!allAudits.length) { main.innerHTML = `<div class="card">Sem dados para comparar.</div>`; return; }
+        const byWorkshop = {};
+        allAudits.forEach(a => {
+          if (!byWorkshop[a.workshopId]) byWorkshop[a.workshopId] = [];
+          byWorkshop[a.workshopId].push(a);
+        });
+        let rows = "";
+        Object.keys(byWorkshop).forEach(wid => {
+          const ws = workshops.find(x => x.id === wid);
+          const audits = byWorkshop[wid];
+          const avg = Math.round(audits.reduce((sum, a) => {
+            const s = a.answers ? a.answers.filter(ans => ans.response === "sim").length / a.answers.length * 100 : 0;
+            return sum + s;
+          }, 0) / audits.length);
+          rows += `<tr><td>${ws ? ws.name : wid} ${ws && ws.code ? `(${ws.code})` : ""}</td><td>${audits.length}</td><td><strong>${avg}%</strong></td></tr>`;
+        });
+        main.innerHTML = `
+          <div class="card">
+            <h3>Comparação entre Oficinas</h3>
+            <table class="compare-table">
+              <tr><th>Oficina</th><th>Auditorias</th><th>Média</th></tr>
+              ${rows}
+            </table>
+          </div>
+        `;
       }
     }
 
@@ -503,8 +529,14 @@
       const cg = document.getElementById("comentariosGerais");
       if (cg) currentAudit.comentariosGerais = cg.value;
       currentAudit.completed = true;
-      await addDoc(collection(db, "audits"), currentAudit);
-      alert("Auditoria guardada e partilhada!");
+
+      if (currentAudit.id) {
+        await updateDoc(doc(db, "audits", currentAudit.id), currentAudit);
+        alert("Auditoria atualizada!");
+      } else {
+        await addDoc(collection(db, "audits"), currentAudit);
+        alert("Auditoria guardada e partilhada!");
+      }
       currentAudit = null;
       await loadAudits();
       showView("relatorios");
@@ -610,6 +642,7 @@
 
         ${a.comentariosGerais ? `<div class="card"><strong>Comentários Gerais:</strong><p>${a.comentariosGerais}</p></div>` : ""}
 
+        <button class="btn" onclick="editAudit('${id}')">Editar Auditoria</button>
         <button class="btn" onclick="exportPDF('${id}')">Exportar PDF</button>
         <button class="btn btn-secondary" onclick="exportExcel('${id}')">Exportar Excel</button>
         ${canDelete ? `<button class="btn btn-danger" onclick="deleteAudit('${id}')">Eliminar Auditoria</button>` : ""}
@@ -640,6 +673,14 @@
           });
         }
       }, 200);
+    };
+
+    window.editAudit = (id) => {
+      const a = allAudits.find(x => x.id === id);
+      if (!a) return;
+      currentAudit = JSON.parse(JSON.stringify(a));
+      currentWorkshopId = a.workshopId;
+      showView("checklist");
     };
 
     window.deleteAudit = async (id) => {
