@@ -653,7 +653,7 @@
             if (y > 250) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
             if (ans.subArea && ans.subArea !== lastSub) {
               doc.setFontSize(8.5); doc.setFont(undefined, "bold"); doc.setTextColor(60, 60, 60);
-              doc.text("Sub-área: " + ans.subArea, 12, y); doc.setTextColor(0); y += 5;
+              doc.text("► " + ans.subArea, 12, y); doc.setTextColor(0); y += 5;
               lastSub = ans.subArea;
             }
             doc.setFontSize(7.5); doc.setFont(undefined, "bold"); doc.text(ans.id, 12, y);
