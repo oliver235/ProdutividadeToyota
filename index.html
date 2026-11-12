@@ -600,7 +600,7 @@
           canvas.width = 450; canvas.height = 340;
           const ctx = canvas.getContext("2d");
           new Chart(ctx, { type: "radar", data: { labels, datasets: [{ label: "Pontuação %", data, backgroundColor: "rgba(235, 10, 30, 0.2)", borderColor: "#EB0A1E", pointBackgroundColor: "#EB0A1E", borderWidth: 2 }] }, options: { responsive: false, animation: false, scales: { r: { beginAtZero: true, max: 100, ticks: { stepSize: 20 } } }, plugins: { legend: { display: false } } } });
-          setTimeout(() => resolve(canvas.toDataURL("image/png")), 600);
+          setTimeout(() => resolve(canvas.toDataURL("image/png")), 800);
         } catch (e) { resolve(null); }
       });
     }
@@ -651,27 +651,27 @@
           let lastSub = "";
           qs.forEach(ans => {
             if (y > 250) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
-            if (ans.subArea) {
-              doc.setFontSize(7); doc.setFont(undefined, "bold"); doc.setTextColor(80, 80, 80);
-              doc.text(ans.subArea, 12, y); doc.setTextColor(0);
+            if (ans.subArea && ans.subArea !== lastSub) {
+              doc.setFontSize(8.5); doc.setFont(undefined, "bold"); doc.setTextColor(60, 60, 60);
+              doc.text("Sub-área: " + ans.subArea, 12, y); doc.setTextColor(0); y += 5;
+              lastSub = ans.subArea;
             }
-            doc.setFontSize(7.5); doc.setFont(undefined, "bold"); doc.text(ans.id, 55, y);
-            doc.setFont(undefined, "normal"); const desc = doc.splitTextToSize(ans.text, 85); doc.text(desc, 65, y);
+            doc.setFontSize(7.5); doc.setFont(undefined, "bold"); doc.text(ans.id, 12, y);
+            doc.setFont(undefined, "normal"); const desc = doc.splitTextToSize(ans.text, 95); doc.text(desc, 25, y);
             const situacao = ans.response === "sim" ? "Conforme" : ans.response === "nao" ? "Não Conforme" : "N/A";
             doc.setTextColor(ans.response === "sim" ? 40 : ans.response === "nao" ? 180 : 100, ans.response === "sim" ? 140 : 0, 0);
-            doc.text(situacao, 155, y); doc.setTextColor(0);
-            if (ans.notes) { const obs = doc.splitTextToSize(ans.notes, 40); doc.text(obs, 175, y); }
+            doc.text(situacao, 135, y); doc.setTextColor(0);
+            if (ans.notes) { const obs = doc.splitTextToSize(ans.notes, 45); doc.text(obs, 160, y); }
             y += Math.max(desc.length * 3.5, 5);
-            lastSub = ans.subArea;
           });
           const subScores = getSubAreaScores(a.answers, area);
           if (subScores.length > 0) {
             const img = await generateSpiderImage(subScores.map(s => s.name), subScores.map(s => s.score));
-            if (img) { if (y > 175) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; } doc.setFontSize(9); doc.setFont(undefined, "bold"); doc.text(`Análise Gráfica - ${area.replace(/^2\.\d+\s/, "")}`, 12, y); y += 4; doc.addImage(img, "PNG", 50, y, 110, 70); y += 78; }
+            if (img) { if (y > 170) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; } doc.setFontSize(9); doc.setFont(undefined, "bold"); doc.text(`Análise Gráfica - ${area.replace(/^2\.\d+\s/, "")}`, 12, y); y += 4; doc.addImage(img, "PNG", 50, y, 110, 70); y += 78; }
           }
           y += 8;
         }
-        if (y > 175) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
+        if (y > 170) { doc.addPage(); page++; addHeaderFooter(doc, page); y = 24; }
         doc.setFontSize(12); doc.setFont(undefined, "bold"); doc.setTextColor(235, 10, 30); doc.text(`Resultado Global: ${score}%`, 12, y + 6);
         const globalImg = await generateSpiderImage(areas, areaScores);
         if (globalImg) doc.addImage(globalImg, "PNG", 50, y + 12, 110, 70);
